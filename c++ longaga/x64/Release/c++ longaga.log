@@ -1,0 +1,8 @@
+﻿  computer.cpp
+C:\Users\jghac\source\repos\c++ longaga\c++ longaga\computer.cpp(7,14): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  Generating code
+  7 of 364 functions ( 1.9%) were compiled, the rest were copied from previous compilation.
+    1 functions were new in current compilation
+    66 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  c++ longaga.vcxproj -> C:\Users\jghac\source\repos\c++ longaga\x64\Release\c++ longaga.exe
