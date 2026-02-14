@@ -1,0 +1,20 @@
+Tournament Score: 120
+Round No.: 4
+
+Computer:
+   Hand: 3-5 5-6 2-5 0-5 1-5  
+   Score: 119
+
+Human:
+   Hand: 2-4 0-4 3-4 0-2  
+   Score: 119
+
+Layout:
+L 5-4 4-6 6-6 6-0 0-0 0-3 3-3 3-6 6-1 1-2 2-3 3-1 1-4  R
+
+Boneyard:
+5-5 4-4 0-1 1-1 2-2 2-6  
+
+Previous Player Passed: No
+
+Next Player: Computer

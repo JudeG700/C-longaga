@@ -2,45 +2,53 @@
 
 #include <iostream>
 #include <deque>
-using namespace std;
+#include <string>
 
-//This class will implement the layout of the project
-class Layout
-{
+// Including these now makes sure they are ready when you uncomment cereal later
+#include <cereal/archives/binary.hpp>
+#include <cereal/archives/json.hpp>
+#include <cereal/types/vector.hpp>
+#include <cereal/types/string.hpp>
+#include <cereal/types/array.hpp>
+#include <cereal/types/deque.hpp>
+
+class Layout {
+private:
+    std::deque<std::string> dominoChain; ///< The domino chain formed by players
+
 public:
+    Layout() {}
 
-	deque<string> dominoChain;
+    /**
+        * @brief Cereal serialization for the domino layout.
+        * Maps the deque to the "domino_chain" key in JSON.
+        */
 
-	void addRight(string tile)
-	{
-		dominoChain.push_back(tile);
-	}
+ 
+    /** @brief Appends a tile to the right-hand side of the layout. */
+    void addRight(std::string tile);
 
-	int returnLeft()
-	{
-		return dominoChain.front()[0] - '0';
-	}
+    bool isEmpty()
+    {
+        return dominoChain.empty();
+    }
 
-	int returnRight()
-	{
-		return dominoChain.back()[2] - '0';
+    /** @brief Appends a tile to the left-hand side of the layout. */
+    void addLeft(std::string tile);
 
-	}
+    /** * @brief Returns the pip value available on the left-most tile.
+        * @return Integer value of the left end, or -1 if empty.
+        */
+    int returnLeft();
 
-	void addLeft(string tile)
-	{
-		dominoChain.push_front(tile);
-	}
+    /** * @brief Returns the pip value available on the right-most tile.
+        * @return Integer value of the right end, or -1 if empty.
+        */
+    int returnRight();
 
-	void clearChain()
-	{
-		dominoChain.clear();
-	}
+    /** @brief Clears all tiles from the board for a new round. */
+    void clearChain();
 
-	deque<string> getChain()
-	{
-		return dominoChain;
-	}
-
-
-};
+    /** @brief Returns a copy of the current domino sequence. */
+    std::deque<std::string> getChain() const;
+    };

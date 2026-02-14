@@ -1,0 +1,20 @@
+Tournament Score: 150
+Round No.: 7
+
+Computer:
+   Hand: 5-6 0-2   
+   Score: 100
+
+Human:
+   Hand: 2-4 1-1 2-2 2-6 
+   Score: 120
+
+Layout:
+L 5-4 4-6 6-6 6-0 0-0 0-3 3-3 3-6 6-1 1-2 2-3 3-1 1-4  R
+
+Boneyard:
+0-1 4-4 0-4 5-5 3-4 2-5 0-5 1-5 3-5 
+
+Previous Player Passed: No
+
+Next Player: Computer

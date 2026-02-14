@@ -4,50 +4,67 @@
 #include <vector>
 #include <string>
 
-//This class will implement the layout of the project
+#include <cereal/archives/binary.hpp>
+#include <cereal/archives/json.hpp>
+#include <cereal/types/vector.hpp>
+#include <cereal/types/string.hpp>
+#include <cereal/types/array.hpp>
+
+/**
+ * @class Hand
+ * @brief Management class for a player's collection of domino tiles.
+ * * This class acts as a wrapper for a dynamic collection of strings representing
+ * dominoes (e.g., "6-6"). It provides high-level operations for hand manipulation,
+ * such as adding/removing tiles, and integrates with the Cereal library for
+ * persistent game state storage.
+ */
+
 class Hand
 {
-	std::vector<std::string> tiles;
+    std::vector<std::string> tiles; ///< the tiles in the hand currently
 
 public:
-	Hand() {}
 
+    /**
+     * @brief Cereal serialization function.
+     * Maps the internal 'tiles' vector to the JSON key "tiles" during save/load.
+     * @param archive The archive object (JSON) being read from or written to.
+     */
+    template<class Archive>
+    void serialize(Archive& archive)
+    {
+        archive(cereal::make_nvp("tiles", tiles));
+    }
 
-	//the player will display all cards in their hand
-	void displayHand()
-	{
-		std::cout << "Hand: ";
-		for (int i = 0; i < tiles.size(); i++)
-		{
-			std::cout << tiles[i] << " ";
-		}
-	}
+    /** @brief Default constructor. Initializes an empty hand. */
+    Hand();
 
-	std::string getTileByIndex(int index)
-	{
-		return tiles[index];
-	}
+    /** @brief Outputs the current hand to the standard console. */
+    void displayHand();
 
-	//this will remove a card from hand when the player draws
-	void removeTile(int tileDex)
-	{
-		tiles.erase(tiles.begin() + tileDex);
-	}
+    /** @brief Utility check to determine if the player has any tiles left. */
+    bool isEmptyHand();
 
-	void addTile(std::string tile)
-	{
-		tiles.push_back(tile);
-	}
+    /** * @brief Retrieves a tile string based on its position in the vector.
+     * @param index The zero-based index of the tile.
+     * @return std::string The tile string (e.g., "1-2").
+     */
+    std::string getTileByIndex(int index) const;
 
-	
-	void setTiles(std::vector<std::string> deal)
-	{
-		tiles = deal;
-	}
+    /** @brief Removes a tile from the hand using its vector index. */
+    void removeTile(int tileDex);
 
-	std::vector<std::string>& getHand() {
-		return tiles;
-	}
+    bool hasTile(std::string targetTile);
 
+    /** @brief Clears all tiles from the hand, usually at the end of a round. */
+    void emptyHand();
 
+    /** @brief Appends a single tile string to the existing hand. */
+    void addTile(std::string tile);
+
+    /** @brief Replaces the entire hand with a new set of tiles. Used for dealing. */
+    void setTiles(std::vector<std::string> deal);
+
+    /** @brief Returns a copy of the hand's tile collection. */
+    std::vector<std::string> getHandTiles() const;
 };

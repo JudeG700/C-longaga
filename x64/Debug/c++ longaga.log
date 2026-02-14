@@ -1,0 +1,18 @@
+﻿  layout.h
+  main.cpp
+C:\Users\jghac\source\repos\c++ longaga\c++ longaga\Tournament.h(62,10): error C2535: 'void Tournament::setHumanScore(int)': member function already defined or declared
+  (compiling source file 'main.cpp')
+      C:\Users\jghac\source\repos\c++ longaga\c++ longaga\Tournament.h(57,10):
+      see declaration of 'Tournament::setHumanScore'
+  
+C:\Users\jghac\source\repos\c++ longaga\c++ longaga\main.cpp(223,16): error C2039: 'setComputerScore': is not a member of 'Tournament'
+      C:\Users\jghac\source\repos\c++ longaga\c++ longaga\Tournament.h(22,7):
+      see declaration of 'Tournament'
+  
+  tournament.cpp
+C:\Users\jghac\source\repos\c++ longaga\c++ longaga\tournament.h(62,10): error C2535: 'void Tournament::setHumanScore(int)': member function already defined or declared
+  (compiling source file 'tournament.cpp')
+      C:\Users\jghac\source\repos\c++ longaga\c++ longaga\tournament.h(57,10):
+      see declaration of 'Tournament::setHumanScore'
+  
+  Generating Code...
