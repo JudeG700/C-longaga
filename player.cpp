@@ -1,3 +1,12 @@
+/*
+************************************************************
+* Name: Jude Ghacibeh
+* Project : Longaga C++
+* Class : CMPS-366 OPL
+* Date : 2/13/2026
+************************************************************
+*/
+
 #pragma once
 #include "hand.h"
 #include <vector>
@@ -9,21 +18,6 @@
 #include <set>
 
 
-/* *********************************************************************
-Function Name: Player
-Purpose: Standard constructor for the Player base class to initialize state.
-Parameters: none
-Return Value: none
-Algorithm:
-            1) Initialize score to zero.
-            2) Prepare hand and ID members for derived class assignment.
-Reference: none
-********************************************************************* */
-Player::Player()
-{
-
-}
-
 
 /* *********************************************************************
 Function Name: getHand
@@ -34,7 +28,7 @@ Algorithm:
             1) Return the hand object by value per project constraints.
 Reference: none
 ********************************************************************* */
-Hand Player::getHand()
+Hand Player::getHand() const
 {
     return hand;
 }
@@ -72,11 +66,9 @@ int Player::getScore() const
 
 /* *********************************************************************
 Function Name: returnID
-Purpose: To provide a string ID for the player.
+Purpose: To retrieve the string ID for the player.
 Parameters: none
 Return Value: A string (e.g., "Human" or "Computer").
-Algorithm:
-            1) Return the private ID member variable.
 Reference: none
 ********************************************************************* */
 std::string Player::returnID() const
@@ -89,8 +81,6 @@ Function Name: emptyHand
 Purpose: To clear all tiles in a hand for round reset.
 Parameters: none
 Return Value: none
-Algorithm:
-            1) Call the emptyHand() method on the internal hand object.
 Reference: none
 ********************************************************************* */
 void Player::emptyHand()
@@ -134,8 +124,6 @@ Purpose: To populate the hand with a new vector of tiles.
 Parameters:
             deal, a vector of strings. The new set of dominoes.
 Return Value: none
-Algorithm:
-            1) Update the internal hand object with the new vector.
 Reference: none
 ********************************************************************* */
 void Player::setTiles(std::vector<std::string> deal)
@@ -146,7 +134,7 @@ void Player::setTiles(std::vector<std::string> deal)
 
 /* *********************************************************************
 Function Name: getHandTiles
-Purpose: To return the vector of tiles from the hand.
+Purpose: To return the vector of tiles from the hand object.
 Parameters: none
 Return Value: std::vector<std::string>, the current tiles.
 Algorithm:

@@ -1,110 +1,123 @@
+/************************************************************
+* Name: Jude Ghacibeh
+* Project : Longaga C++
+* Class : CMPS - 366 OPL
+* Date : 2 / 13 / 2026
+* ***********************************************************
+*/
+
 #include "human.h"
 #include <iostream>
 #include "Computer.h"
 #include "round.h"
 
 using namespace std;
+
 /* *********************************************************************
-Function Name: Human (Constructors)
-Purpose: To initialize the Human player object, either as a default
-         instance or with a specific starting hand.
-Parameters:
-            hand, a Hand object. Passed by value.
-Return Value: None.
+Function Name: returnID
+Purpose: To retrieve the player's unique identifier.
+Parameters: None.
+Return Value: The string ID of the human player.
 Algorithm:
-            1) Assign the provided hand to the internal member variable.
-            2) Initialize player-specific identifiers.
+   1) Return the internal ID member variable.
 Reference: None.
 ********************************************************************* */
-Human::Human() {}
-Human::Human(Hand hand) { this->hand = hand; }
+std::string Human::returnID() const {
+    return ID;
+}
 
-
+/* *********************************************************************
+Function Name: parseTile
+Purpose: To convert a string representation of a tile into two numeric values.
+Parameters:
+   tile, a constant string passed by reference. Represents the tile (e.g., "5-4").
+Return Value: A pair of integers representing the two pip values.
+Algorithm:
+   1) Find the position of the dash delimiter.
+   2) Extract the numeric substring before the dash and convert to integer.
+   3) Extract the numeric substring after the dash and convert to integer.
+   4) Return the pair of pips.
+Reference: Logic for string parsing assisted by Gemini AI.
+********************************************************************* */
 std::pair<int, int> Human::parseTile(const std::string& tile) {
     size_t dash = tile.find('-');
-    if (dash == std::string::npos) return { -1, -1 }; // Safety return
+    // Return sentinel values if string format is incorrect
+    if (dash == std::string::npos) return { -1, -1 };
 
     int left = std::stoi(tile.substr(0, dash));
     int right = std::stoi(tile.substr(dash + 1));
     return { left, right };
 }
 
-
 /* *********************************************************************
-Function Name: returnID
-Purpose: To identify the player as a human for display and logic purposes.
-Parameters: None.
-Return Value: A string containing "Human".
-Reference: None.
+Function Name: findPlayableTiles
+Purpose: To identify all valid moves currently available in the player's hand.
+Parameters:
+   hand, a Hand object passed by value. Contains the current tiles.
+   gameRound, a Round object passed by reference. Used to check pass status.
+   leftEnd, an integer representing the leftmost value on the board.
+   rightEnd, an integer representing the rightmost value on the board.
+Return Value: A vector of PlayableOption structures (index and side).
+Algorithm:
+   1) Check if the opponent has passed to determine legal play sides.
+   2) Iterate through every tile in the player's hand.
+   3) Check if a tile matches the board's left end or is a double.
+   4) Check if a tile matches the board's right end (legal only if double or opponent passed).
+   5) Store and return all valid tile-index/side combinations.
+Reference: modeling algorithm for finding playable tiles and building return struct assisted by gemini and chatgpt
 ********************************************************************* */
+std::vector<Player::PlayableOption> Human::findPlayableTiles(Hand hand, Round& gameRound, int leftEnd, int rightEnd) {
+    // Use the nested struct within the Player scope
+    std::vector<Player::PlayableOption> playableTiles;
+    std::vector<std::string> tiles = hand.getHandTiles();
 
-std::vector<int> Human::findPlayableTiles(Hand& playerHand, Round& gameRound, int leftEnd, int rightEnd)
-{
+    // Check if the computer (Index 1) passed to unlock the right side
+    const int COMPUTER_INDEX = 1;
+    bool oppPassed = gameRound.isPassed(COMPUTER_INDEX);
 
-    std::vector<int> playable;
-    std::vector<std::string> tiles = playerHand.getHandTiles();   // works ONLY if getHand returns reference
-
-    bool oppPassed = gameRound.isPassed(1);
-
-    for (int i = 0; i < (int)tiles.size(); i++)
-    {
+    for (int i = 0; i < (int)tiles.size(); i++) {
         std::pair<int, int> p = parseTile(tiles[i]);
-        int a = p.first;
-        int b = p.second;
-        bool isDouble = (a == b);
+        bool isDouble = (p.first == p.second);
 
-        bool canPlayLeft = (a == leftEnd || b == leftEnd);
+        bool matchesLeft = (p.first == leftEnd || p.second == leftEnd);
+        bool matchesRight = (p.first == rightEnd || p.second == rightEnd);
 
-        // Right side is only valid if (Matches Right) AND (is Double OR Opponent Passed)
-        bool canPlayRight = (a == rightEnd || b == rightEnd) && (isDouble || oppPassed);
-
-        if (canPlayLeft || canPlayRight || isDouble)
-        {
-            /*
-            cout << "TILE: " << tiles[i] << endl;
-            cout << "canPlayLeft: " << canPlayLeft << endl;
-            cout << "canPlayRight: " << canPlayRight << endl;
-            cout << "isDouble: " << isDouble << endl;
-            cout << "oppPassed: " << oppPassed << endl;
-            cout << endl; */
-            playable.push_back(i);
+        // Evaluate Left side playability
+        if (matchesLeft) {
+            playableTiles.push_back({ i, 'L' });
         }
 
+        // Evaluate Right side playability (Opponent's side)
+        if (matchesRight && (isDouble || oppPassed)) {
+            playableTiles.push_back({ i, 'R' });
+        }
+       
     }
-    return playable;
-}
-
-std::string Human::returnID() const
-{
-    return ID;
+    return playableTiles;
 }
 
 /* *********************************************************************
 Function Name: takeTurn
-Purpose: To manage the user interface for a human player's turn,
-         collecting and validating their choice of action.
+Purpose: To facilitate the human player's turn via console input and validation.
 Parameters:
-            gameStock, a Stock object. Passed by value.
-            leftEnd, an integer representing the leftmost board value.
-            rightEnd, an integer representing the rightmost board value.
-Return Value: A Move structure containing the validated player action.
+   gameStock, a Stock object passed by value. Contains the boneyard.
+   gameRound, a Round object passed by reference. Maintains round state.
+   leftEnd, integer value of the left layout end.
+   rightEnd, integer value of the right layout end.
+Return Value: A Move structure containing the player's validated choice.
 Algorithm:
-            1) Prompt the user to choose between playing a tile, drawing,
-               passing, or requesting help.
-            2) If playing, prompt for a tile index and validate that it
-               exists within the player's current hand.
-            3) Prompt for the board side (Left or Right) and validate the input.
-            4) If drawing, verify that tiles remain in the boneyard before
-               setting the draw status.
-            5) If help is requested, utilize the computer's heuristic logic
-               to suggest an optimal move.
-            6) Package the validated selections into a Move object and return it.
-Reference: Logic for input validation loops assisted by AI.
+   1) Determine if the player has any legal moves.
+   2) Enter a loop to prompt the user for an action (Play, Draw, Pass, Help).
+   3) If playing: validate the chosen index and ensure the move matches the chosen side's pips.
+   4) If drawing: ensure the boneyard is not empty.
+   5) If passing: ensure the boneyard is empty and no playable tiles exist.
+   6) Return the finalized move details.
+Reference: Input validation structure assisted by Gemini AI.
 ********************************************************************* */
-Move Human::takeTurn(Stock gameStock, Round gameRound, int leftEnd, int rightEnd)  // declared here
-{
+Move Human::takeTurn(Stock gameStock, Round gameRound, int leftEnd, int rightEnd) {
     Move move;
 
+    // Initialize move defaults
     move.draw = false;
     move.passed = false;
     move.help = false;
@@ -112,68 +125,116 @@ Move Human::takeTurn(Stock gameStock, Round gameRound, int leftEnd, int rightEnd
     move.side = ' ';
     move.hasPlayableTiles = false;
 
-    vector<int> tiles = findPlayableTiles(hand, gameRound, leftEnd, rightEnd);
-    //if there are playable tiles
-    if (!tiles.empty())
-    {
+    // Check hand for any legal moves
+    vector<PlayableOption> playableList = findPlayableTiles(hand, gameRound, leftEnd, rightEnd);
+    if (!playableList.empty()) {
         move.hasPlayableTiles = true;
     }
-    
-    bool choiceValid = 0;
-    while (!choiceValid)
-    {
+
+    //to check if the selected move is valid
+    bool choiceValid = false;
+
+    while (!choiceValid) {
         int choice = -1;
+
+        // Main menu loop
         do {
             cout << "1=Play 2=Draw 3=Pass 4=Help ";
             cin >> choice;
-        } while (choice != 1 && choice != 2 && choice != 3 && choice != 4);
 
+            //made with google gemini
+            if (cin.fail()) {
+                // 1. Clear the error flag
+                cin.clear();
+
+                // 2. Ignore everything in the buffer until the next newline
+                // This "throws away" the bad characters (like the 'a')
+                cin.ignore(1000, '\n');
+
+                cout << "Invalid input!" << endl;
+                continue; // Restart the loop
+            }
+        } while (choice < 1 || choice > 4);
+
+        //if they chose to place a tile
         if (choice == 1) {
-            move.draw = false;
-            move.passed = false;
-
+            // Handle tile index selection
             do {
                 cout << "Tile index (0-" << hand.getHandTiles().size() - 1 << "): ";
                 cin >> move.tileIndex;
-            } while (move.tileIndex < 0 || move.tileIndex >= hand.getHandTiles().size());
 
+                //made with google gemini
+                if (cin.fail()) {
+                    // 1. Clear the error flag
+                    cin.clear();
+
+                    // 2. Ignore everything in the buffer until the next newline
+                    // This "throws away" the bad characters (like the 'a')
+                    cin.ignore(1000, '\n');
+
+                    cout << "Invalid input!" << endl;
+                    continue; // Restart the loop
+                }
+            } while (move.tileIndex < 0 || move.tileIndex >= (int)hand.getHandTiles().size());
+
+            //Handle side selection
             do {
                 cout << "Side L or R (only choose right if opponent passed): ";
                 cin >> move.side;
+
+                //made with google gemini
+                if (cin.fail()) {
+                    // 1. Clear the error flag
+                    cin.clear();
+
+                    // 2. Ignore everything in the buffer until the next newline
+                    // This "throws away" the bad characters (like the 'a')
+                    cin.ignore(1000, '\n');
+
+                    cout << "Invalid input!" << endl;
+                    continue; // Restart the loop
+                }
+
+                move.side = toupper(move.side);
+
+
             } while (move.side != 'L' && move.side != 'R');
 
             string tile = hand.getHandTiles()[move.tileIndex];
-            pair<int, int> p = parseTile(tile); // Use your parse utility
-            int a = p.first;
-            int b = p.second;
-            bool isDouble = (a == b);
+            pair<int, int> pips = parseTile(tile);
+            bool isDouble = (pips.first == pips.second);
 
-            
             if (move.side == 'L') {
-                if (a == leftEnd || b == leftEnd || isDouble) {
-                    choiceValid = true; // SUCCESS
+                // Verify left side match or double rule
+                if (pips.first == leftEnd || pips.second == leftEnd || isDouble) {
+                    choiceValid = true;
                 }
                 else {
                     cout << "Invalid Left move. Tile doesn't match." << endl;
                 }
             }
             else if (move.side == 'R') {
-                bool oppPassed = gameRound.isPassed(1);
+                // Verify right side match (requires double or opponent pass)
+                const int COMPUTER_PLAYER_INDEX = 1;
+                bool oppPassed = gameRound.isPassed(COMPUTER_PLAYER_INDEX);
+
+                //if opponent passed or tile is a double
                 if (isDouble || oppPassed) {
-                    if (a == rightEnd || b == rightEnd || isDouble) {
-                        choiceValid = true; // SUCCESS
+                    if (pips.first == rightEnd || pips.second == rightEnd) {
+                        choiceValid = true;
                     }
                     else {
                         cout << "Invalid Right move. Tile doesn't match." << endl;
                     }
                 }
                 else {
-                    cout << "Sorry. You can't move Right unless opponent passed or it's a double." << endl;
+                    cout << "You can't place tiles on your opponent's side unless they've passed." << endl;
                 }
             }
         }
+        //if they draw
         else if (choice == 2) {
-            // Draw logic
+            // Verify boneyard availability before drawing
             if (gameStock.getBoneyard().empty()) {
                 cout << "Boneyard empty!" << endl;
             }
@@ -182,29 +243,25 @@ Move Human::takeTurn(Stock gameStock, Round gameRound, int leftEnd, int rightEnd
                 choiceValid = true;
             }
         }
+        //if they pass
         else if (choice == 3) {
-            
-            if (!gameStock.getBoneyard().empty() || move.hasPlayableTiles)
-            {
-                cout << "Sorry. Can't pass unless boneyard is empty and you have no playable tiles left" << endl;
-                choiceValid = false;
-
+            // Verify pass conditions: empty boneyard AND no playable moves
+            if (!gameStock.getBoneyard().empty() || move.hasPlayableTiles) {
+                cout << "Sorry. You can't pass unless the boneyard is empty and you have no playable tiles." << endl;
             }
-            else
-            {
+            else {
                 move.passed = true;
                 choiceValid = true;
             }
-            
         }
-        else if (choice == 4)
-        {
+        //if they request help
+        else if (choice == 4) {
+            // Set help flag for external hint logic
             move.help = true;
-            move.draw = false;
-            move.passed = false;
-            move.hasPlayableTiles = false;
+            choiceValid = true;
         }
+
+        
     }
-    
     return move;
 }
