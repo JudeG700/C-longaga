@@ -393,13 +393,7 @@ void loadGameState (string filename, Player* human, Player* computer, Stock& gam
 				}
 			}
 
-			//if nothing is in the layout yet, this means the game hasn't started
-			if (layout.isEmpty())
-			{
-				string engine = "";
-				engine = obtainEngine(currentRound, players, gameStock);
-				firstTurn(engine, layout, players, currentRound);
-			}
+		
 		}
 		//load boneyard
 		else if (line.find("Boneyard:") != string::npos)
@@ -657,7 +651,8 @@ bool applyMove(
 			}
 			else
 			{
-				cout << "A high value tile that would save me plenty of points" << endl;
+				int totalPipValue = a + b;
+				cout << "The pips on my current tile, " << move.chosenTile[0] << " and " << move.chosenTile[2] << ", add up to " << totalPipValue << ", which is a higher sum value than the other tiles I can play" << endl;
 				cout << "Continuing to hold tiles with lots of pips would soften the blow if I were to lose; the player gets less points" << endl;
 			}
 		}
@@ -956,6 +951,8 @@ int main()
 	Tournament gameTournament;
 
 
+	bool roundInitialized = false;
+
 	//Sent to menu first
 	int option = menu();
 
@@ -983,85 +980,73 @@ int main()
 		
 		//set the required score for the tournament
 		gameTournament.setTournScore(tournamentScore);
+		roundInitialized = false; //why here???
+	}
+	else if (option == 2)
+	{
+		cout << "resuming loaded game " << endl;
+		string loadName = "";
+		if ((loadName = showLoadMenu()) == " ")
+		{
+			menu();
+		}
+		loadGameState(loadName, players[0], players[1], gameStock, gameTournament, layout, gameRound);
+		roundInitialized = true;
 
 	}
-
-	//if player chose to load game
-	bool gameLoaded = (option == 2);
-	
-	//nothing is added to the layout yet
-	leftEnd = 0;
-	rightEnd = 0;
-
-	//notifies compiler whether to save when a game was won
-	bool gameWon = 0;
-
 	//Continues looping until the tournament score is reached
 	while (gameTournament.getPlayerScore() < gameTournament.getTournScore() && gameTournament.getComputerScore() < gameTournament.getTournScore())
 	{
 
 		//if this hasn't come from a player loading a game
-		if (gameLoaded == false)
-		{
+		string engine = "";
 
-			//shuffle the tiles first
+		if (!roundInitialized)
+		{
+			layout.clearChain();
+			gameStock.reset();        // however you reset stock
 			gameStock.shuffle();
 
 			//deal tiles to each player's hands
 			players[0]->setTiles(gameStock.deal());
 			players[1]->setTiles(gameStock.deal());
 
-			
+
 			//obtain engine
-			string engine = "";
-			engine = obtainEngine(gameRound, players, gameStock);
-
-			//whoever has the engine first takes the first turn
-			firstTurn(engine, layout, players, gameRound);
-
-
-			//------------------------------
-			//store data in variables to save them
-			humanHand = players[0]->getHand();
-			computerHand = players[1]->getHand();
-
-			//if a round was won
-			if (gameWon)
-			{
-				
-				//saves it too a copy
-				initSave(humanHand, computerHand, gameStock, gameTournament, layout, gameRound);
-			}
-			//------------------------------
-
 
 		}
 
-		//if the player loads the game, sync previous data with all objects
-		else if (gameLoaded == true)
+
+		if (layout.isEmpty() && !gameRound.isRoundOver())
 		{
-			
-			
-			cout << "resuming loaded game " << endl;
-			string loadName = "";
-			if ((loadName = showLoadMenu()) == " ")
-			{
-				menu();
-			}
-			loadGameState(loadName, players[0], players[1], gameStock, gameTournament, layout, gameRound);
-
-			
-			//no need to re-load game after it's been loaded
-			gameLoaded = false;
+			engine = obtainEngine(gameRound, players, gameStock);
+			firstTurn(engine, layout, players, gameRound);
 		}
-		
-		
-		//Change made here
-		
+
+		//whoever has the engine first takes the first turn
+
+		roundInitialized = true;
+
+
 		cout << endl;
 		cout << "Get ready for round " << gameRound.getRoundNum() << endl;
 		Sleep(2000);
 
+
+		//------------------------------
+		//store data in variables to save them
+		//humanHand = players[0]->getHand();
+		//computerHand = players[1]->getHand();
+
+		//if a round was won
+		/*if (gameWon)
+		{
+				
+			//saves it too a copy
+			initSave(humanHand, computerHand, gameStock, gameTournament, layout, gameRound);
+		} */
+		//------------------------------
+	
 
 		//determine if player placed a tile
 		bool placedTile[2] = { false, false };
@@ -1070,20 +1055,6 @@ int main()
 		//while current round isn't over
 		while (!gameRound.isRoundOver())
 		{
-
-			//load previous tiles
-			/*
-			players[0]->setTiles(players[0]->getHandTiles());
-			players[1]->setTiles(players[1]->getHandTiles());
-
-			//for when loading a new game
-			if (layout.isEmpty())
-			{
-				string engine = "";
-				engine = obtainEngine(gameRound, players, gameStock);
-				firstTurn(engine, layout, players, gameRound);
-			}
-			*/
 
 			//get layout ends AFTER obtaining the engine
 			leftEnd = layout.returnLeft();
@@ -1156,66 +1127,70 @@ int main()
 			Player::Move move;
 
 
-			do
+			//do
+			//{
+				
+			//IMPLEMENTED BUG CHECK WITH CHATGPT
+			//error checking for players
+			if (players[0] == nullptr || players[1] == nullptr) {
+				cout << "Memory Error: Players not initialized!" << endl;
+				return 1;
+			}
+
+			if (gameRound.getCurrentPlayer() < 0 || gameRound.getCurrentPlayer() > 1) {
+				cout << "Memory Error: currentPlayer index out of bounds: " << gameRound.getCurrentPlayer() << endl;
+				return 1;
+			}
+
+			//get the move
+			move = players[gameRound.getCurrentPlayer()]->takeTurn(gameStock, gameRound, leftEnd, rightEnd);
+				
+
+			//apply the move to the layout
+			moveWasSuccessful = applyMove(players[gameRound.getCurrentPlayer()], layout, gameStock, gameRound, move);
+				
+
+			//update the ends
+//			leftEnd = layout.returnLeft();
+//			rightEnd = layout.returnRight();
+
+			vector<string>boneyard = gameStock.getBoneyard();
+
+			//if a player chose to pass
+			if (move.passed)
 			{
-				
-				//IMPLEMENTED BUG CHECK WITH CHATGPT
-				//error checking for players
-				if (players[0] == nullptr || players[1] == nullptr) {
-					cout << "Memory Error: Players not initialized!" << endl;
-					return 1;
-				}
+				//they are now set to passed
+				gameRound.setPassed(gameRound.getCurrentPlayer());
 
-				if (gameRound.getCurrentPlayer() < 0 || gameRound.getCurrentPlayer() > 1) {
-					cout << "Memory Error: currentPlayer index out of bounds: " << gameRound.getCurrentPlayer() << endl;
-					return 1;
-				}
 
-				//get the move
-				move = players[gameRound.getCurrentPlayer()]->takeTurn(gameStock, gameRound, leftEnd, rightEnd);
-				
-
-				//apply the move to the layout
-				moveWasSuccessful = applyMove(players[gameRound.getCurrentPlayer()], layout, gameStock, gameRound, move);
-				
-
-				//update the ends
-				leftEnd = layout.returnLeft();
-				rightEnd = layout.returnRight();
-
-				vector<string>boneyard = gameStock.getBoneyard();
-
-				//if a player chose to pass and there's nothing left in the boneyard
-				if (move.passed)
+				//if the opponent pass right before the player did, and the boneyard is empty, it's a tie
+				if (gameRound.bothPassed() && boneyard.empty()) //FIX!!!!!!!!
 				{
-					gameRound.setPassed(gameRound.getCurrentPlayer());
+					cout << "Both players have passed. It's a tie" << endl;
+					gameRound.roundOver();
+					moveWasSuccessful = true;
 
-
-					//if both pass consecutively and the boneyard is empty, it's a tie
-					if (gameRound.bothPassed() && boneyard.empty()) //FIX!!!!!!!!
-					{
-						cout << "Both players have passed. It's a tie" << endl;
-						gameRound.roundOver();
-						moveWasSuccessful = true;
-
-						break;
-					}
+					break;
+				}
 					
-				}
-				else //reset the pass
+			}
+			else 
+			{
+				//if the player passed on their previous turn
+				if (gameRound.isPassed(gameRound.getCurrentPlayer()))
 				{
-					if (gameRound.isPassed(gameRound.getCurrentPlayer()))
-					{
-						cout << "CUR: " << gameRound.getCurrentPlayer() << endl;
-						gameRound.resetPass(gameRound.getCurrentPlayer());
-					}
+					//un-set their pass status
+					cout << "CUR: " << gameRound.getCurrentPlayer() << endl;
+					gameRound.resetPass(gameRound.getCurrentPlayer());
 				}
+			}
 
 				
 				
 
-			} while (!moveWasSuccessful);
+			//} while (!moveWasSuccessful);
 
+			//give time to process computer opponent's move (the only two players are human and computer)
 			if (gameRound.getCurrentPlayer() == 1)
 			{
 				Sleep(1000);
@@ -1228,7 +1203,7 @@ int main()
 			//if either hand is empty, the round ends and the winner is determined
 			if (players[0]->getHandTiles().empty() || players[1]->getHandTiles().empty())
 			{
-				break;
+				gameRound.roundOver();
 			}
 			
 			
@@ -1236,6 +1211,8 @@ int main()
 			gameRound.setCurrentPlayer(nextIdx);
 
 		} 
+
+
 
 		//if there is a set winner
 		if (!gameRound.bothPassed())
@@ -1272,9 +1249,6 @@ int main()
 			//whoever has the least tiles wins the round
 			tiePoints(players[0], players[1], gameTournament);
 
-			//round is over
-			gameRound.roundOver();
-
 			//reset passes for next round
 			gameRound.resetPasses();
 
@@ -1287,52 +1261,63 @@ int main()
 		//increment round number
 		gameRound.nextRound();
 
-		//the required engine is the engine lower than the first
-		gameRound.setRequiredEngine();
+		//the required engine is the engine lower than the preceeding one
+		//gameRound.setRequiredEngine();
+		gameRound.determineRequiredEngine();
 
 		//clear chain
 		layout.clearChain();
+
+		//reset the game stock
+		gameStock.reset();
 
 		//empty both hands
 		players[0]->emptyHand();
 		players[1]->emptyHand();
 
+		//reset
+		roundInitialized = false;
+
 
 		cout << endl;
 
 		cout << "The round has ended " << endl;
-		Sleep(3000);
+		Sleep(2000);
 
-		cout << "TOTAL POINTS: " << endl;
+		cout << "Points for each player so far: " << endl;
 		cout << "__________________________________________" << endl;
 		cout << "Human: " << gameTournament.getPlayerScore() << endl;
 		cout << "Computer: " << gameTournament.getComputerScore() << endl;
 		cout << "__________________________________________" << endl;
-		Sleep(3000);
+		Sleep(2000);
 		
 
-		gameStock.reset();
 
 		//offer player to save when round ends
-		gameWon = 1;
+		//gameWon = 1;
 	}
 
 
 	string winner = gameTournament.determineWinner();
 	cout << endl;
-	cout << "Tournament is over: " << endl;
-	cout << "The winner is: ";
+	cout << "The tournament is over because the tournament score has been surpassed" << endl;
+	Sleep(1000);
+	cout << "The winner is ";
 	cout << winner << endl;
-	cout << "Score: ";
+	cout << "With a score of ";
 
 	if (players[0]->returnID() == winner)
 	{
-		cout << gameTournament.getPlayerScore() << endl;
+		cout << gameTournament.getPlayerScore();
 	}
 	else
 	{
-		cout << gameTournament.getComputerScore() << endl;
+		cout << gameTournament.getComputerScore();
 	}
+
+	cout << " points" << endl;
+	Sleep(1000);
+	cout << "game over" << endl;
 
 }
 

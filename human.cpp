@@ -7,9 +7,12 @@
 */
 
 #include "human.h"
+#include <limits>
+#include <string>
 #include <iostream>
 #include "Computer.h"
 #include "round.h"
+#include <iterator>
 
 using namespace std;
 
@@ -114,14 +117,14 @@ Algorithm:
    6) Return the finalized move details.
 Reference: Input validation structure assisted by Gemini AI.
 ********************************************************************* */
-Move Human::takeTurn(Stock gameStock, Round gameRound, int leftEnd, int rightEnd) {
-    Move move;
+Player::Move Human::takeTurn(Stock &gameStock, Round gameRound, int leftEnd, int rightEnd) {
 
+    Player::Move move;
     // Initialize move defaults
     move.draw = false;
     move.passed = false;
     move.help = false;
-    move.tileIndex = -1;
+    move.chosenTile = "";
     move.side = ' ';
     move.hasPlayableTiles = false;
 
@@ -137,31 +140,14 @@ Move Human::takeTurn(Stock gameStock, Round gameRound, int leftEnd, int rightEnd
     while (!choiceValid) {
         int choice = -1;
 
-        // Main menu loop
-        do {
-            cout << "1=Play 2=Draw 3=Pass 4=Help ";
-            cin >> choice;
-
-            //made with google gemini
-            if (cin.fail()) {
-                // 1. Clear the error flag
-                cin.clear();
-
-                // 2. Ignore everything in the buffer until the next newline
-                // This "throws away" the bad characters (like the 'a')
-                cin.ignore(1000, '\n');
-
-                cout << "Invalid input!" << endl;
-                continue; // Restart the loop
-            }
-        } while (choice < 1 || choice > 4);
-
-        //if they chose to place a tile
-        if (choice == 1) {
-            // Handle tile index selection
+        //you can't draw twice in one turn
+        if (move.draw)
+        {
             do {
-                cout << "Tile index (0-" << hand.getHandTiles().size() - 1 << "): ";
-                cin >> move.tileIndex;
+
+                cout << "1=Play 2=Pass 3=Help ";
+
+                cin >> choice;
 
                 //made with google gemini
                 if (cin.fail()) {
@@ -175,7 +161,80 @@ Move Human::takeTurn(Stock gameStock, Round gameRound, int leftEnd, int rightEnd
                     cout << "Invalid input!" << endl;
                     continue; // Restart the loop
                 }
-            } while (move.tileIndex < 0 || move.tileIndex >= (int)hand.getHandTiles().size());
+            } while (choice < 1 || choice > 3);
+
+
+            if (choice == 2 || choice == 3)
+            {
+                choice++;
+            }
+
+        }
+        else
+        {
+            do {
+
+                cout << "1=Play 2=Draw 3=Pass 4=Help ";
+
+                cin >> choice;
+
+                //made with google gemini
+                if (cin.fail()) {
+                    // 1. Clear the error flag
+                    cin.clear();
+
+                    // 2. Ignore everything in the buffer until the next newline
+                    // This "throws away" the bad characters (like the 'a')
+                    cin.ignore(1000, '\n');
+
+                    cout << "Invalid input!" << endl;
+                    continue; // Restart the loop
+                }
+            } while (choice < 1 || choice > 4);
+
+        }
+
+        // Main menu loop
+
+        //if they chose to place a tile
+        if (choice == 1) {
+            vector<string>::iterator it;
+            vector<string> tiles = hand.getHandTiles();
+            int x = 0;
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+            // Handle tile index selection
+            do {
+                cout << "Enter the tile you want to place" << endl;
+                getline(cin, move.chosenTile);
+
+                //made with google gemini
+                if (cin.fail()) {
+                    // 1. Clear the error flag
+                    cin.clear();
+
+                    // 2. Ignore everything in the buffer until the next newline
+                    // This "throws away" the bad characters (like the 'a')
+                    cin.ignore(1000, '\n');
+
+                    cout << "Invalid input!" << endl;
+                    continue; // Restart the loop
+                }
+                
+                it = find(tiles.begin(), tiles.end(), move.chosenTile);
+                /*if (it != tiles.end()) {
+                    std::cout << "Element found at index: " << std::distance(tiles.begin(), it) << std::endl; //
+                }
+                else {
+                    std::cout << "Element not found" << std::endl;
+                } */
+
+                if (it == tiles.end()) {
+                    std::cout << move.chosenTile << " isn't in your hand" << std::distance(tiles.begin(), it) << std::endl; //
+                }
+                
+
+            } while (it == tiles.end());
 
             //Handle side selection
             do {
@@ -200,13 +259,13 @@ Move Human::takeTurn(Stock gameStock, Round gameRound, int leftEnd, int rightEnd
 
             } while (move.side != 'L' && move.side != 'R');
 
-            string tile = hand.getHandTiles()[move.tileIndex];
-            pair<int, int> pips = parseTile(tile);
+            //string tile = hand.getHandTiles()[move.tileIndex];
+            pair<int, int> pips = parseTile(move.chosenTile);
             bool isDouble = (pips.first == pips.second);
 
             if (move.side == 'L') {
                 // Verify left side match or double rule
-                if (pips.first == leftEnd || pips.second == leftEnd || isDouble) {
+                if (pips.first == leftEnd || pips.second == leftEnd) {
                     choiceValid = true;
                 }
                 else {
@@ -234,31 +293,82 @@ Move Human::takeTurn(Stock gameStock, Round gameRound, int leftEnd, int rightEnd
         }
         //if they draw
         else if (choice == 2) {
+
+            
             // Verify boneyard availability before drawing
             if (gameStock.getBoneyard().empty()) {
                 cout << "Boneyard empty!" << endl;
             }
-            else {
+            else if (move.hasPlayableTiles)
+            {
+                cout << "Sorry. You still have tiles you can play." << endl;
+            } 
+            else{
+
+                string drawnTile = gameStock.drawTile();
+
+                hand.addTile(drawnTile);
+                cout << returnID() << " drew " << hand.getTileByIndex(hand.getHandTiles().size() - 1) << endl;
                 move.draw = true;
-                choiceValid = true;
+
+                playableList = findPlayableTiles(hand, gameRound, leftEnd, rightEnd);
+                move.hasPlayableTiles = !playableList.empty();
+
+                //the turn isn't over yet as the player must play the tile or pass
+
             }
+
+            choiceValid = false;
+
         }
         //if they pass
         else if (choice == 3) {
-            // Verify pass conditions: empty boneyard AND no playable moves
-            if (!gameStock.getBoneyard().empty() || move.hasPlayableTiles) {
+            // Verify pass conditions: empty boneyard AND no playable moves 
+            /*if (!gameStock.getBoneyard().empty() || move.hasPlayableTiles) {
                 cout << "Sorry. You can't pass unless the boneyard is empty and you have no playable tiles." << endl;
             }
             else {
                 move.passed = true;
                 choiceValid = true;
+
+            } */
+
+
+            //can pass only if no playable tiles for all cases
+            
+            bool drawPass = move.draw && !move.hasPlayableTiles;
+            bool normalPass = gameStock.getBoneyard().empty() && !move.hasPlayableTiles;
+
+            if (drawPass || normalPass) {
+                move.passed = true;
+                choiceValid = true;
+            }
+            else {
+                if (move.hasPlayableTiles) {
+                    cout << "Sorry, you still have tiles you can play" << endl;
+                }
+                else {
+                    cout << "Sorry, to pass, you must either: " << endl;
+                    cout << "A: Have drawn a tile and can't play it, or" << endl;
+                    cout << "B: Have 0 playable tiles and have the boneyard be empty" << endl;
+
+                }
             }
         }
         //if they request help
         else if (choice == 4) {
             // Set help flag for external hint logic
-            move.help = true;
-            choiceValid = true;
+            
+            /*Since help isn't a move, it returns false so that the player
+            *can make their move after the assistance they received
+            */
+
+            Computer helper;
+
+            helper.help(this, move, gameStock, gameRound, leftEnd, rightEnd);
+
+            choiceValid = false;
+
         }
 
         
