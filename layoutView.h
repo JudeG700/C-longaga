@@ -4,11 +4,16 @@
 #include <vector>
 using namespace std;
 
-//This class will display the layout of the project
+
+/* *********************************************************************
+Class Name: Layoutview
+Purpose: Displays the sequence of tiles managed by layout. Seen by both
+players to check the board and to place tiles.
+********************************************************************* */
 class LayoutView
 {
 
 public:
 
-	void display(deque<string> chain);
+	void display(deque<string> tileChain);
 };

@@ -2,7 +2,7 @@
 
 #include "hand.h"
 #include <vector>
-#include "move.h"
+//#include "move.h"
 #include "stock.h"
 #include <iostream>
 #include <set>
@@ -27,7 +27,14 @@ public:
         char side; // 'L' for Left, 'R' for Right
     };
 
-    
+    struct Move {
+        std::string chosenTile;
+        char side;   // 'L' or 'R'
+        bool draw;   // true if drawing from boneyard
+        bool passed;
+        bool help;
+        bool hasPlayableTiles;
+    };
 
     // --- 1. Constants ---
     // (None defined at the base level)
@@ -98,6 +105,10 @@ public:
     ********************************************************************* */
     virtual std::string returnID() const;
 
+    std::string getTileByIndex(int index) const;
+
+    int getIndexByTile(std::string tile) const;
+    
     // --- 5. Mutators ---
 
     /* *********************************************************************
@@ -149,13 +160,14 @@ public:
     ********************************************************************* */
     void emptyHand();
 
+
     // --- 6. Utility Functions ---
 
     /* *********************************************************************
     Function Name: takeTurn
     Purpose: Pure virtual entry point for player decision logic.
     ********************************************************************* */
-    virtual Move takeTurn(Stock gameStock, Round gameRound, int leftEnd, int rightEnd) = 0;
+    virtual Move takeTurn(Stock &gameStock, Round gameRound, int leftEnd, int rightEnd) = 0;
 
     /* *********************************************************************
     Function Name: findPlayableTiles

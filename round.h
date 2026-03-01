@@ -4,97 +4,66 @@
 #include <vector>
 #include <array>
 #include <string>
-
 #include "player.h"
 
-#include <cereal/archives/binary.hpp>
-#include <cereal/archives/json.hpp>
-#include <cereal/types/vector.hpp>
-#include <cereal/types/string.hpp>
-#include <cereal/types/array.hpp>
+// Forward declaration for circular dependency
+class Round;
 
-/**
- * @class Round
- * @brief Manager class for individual round state and rules.
- * * This class tracks the flow of a single round, including turn management,
- * the 'Engine' rotation (6-6, 5-5, etc.), and passing logic. It is
- * fully serializable via the Cereal library to allow for game resumption.
- */
-
-class Round
-{
-private:
-    int roundNum = 1;                     ///< Current round number in the tournament.
-    bool hasPassed = false;               ///< General flag for a pass event.
-    std::array<bool, 2> passed{ false, false }; ///< Tracks individual pass status for both players.
-    int engineIndex = 0;                  ///< Index for the currently required engine tile.
-    int currentPlayer = 0;                ///< Index of the player whose turn it is (0: Human, 1: Computer).
-    int nextPlayer = 0;                   ///< Index of the player up next.
-    bool roundOverFlag = false;           ///< Flag indicating the current round has concluded.
-
-    std::string engine = "6-6"; ///< the current engine
-    std::string requiredEngine = "6-6"; ///< the current required engine
-    std::vector<std::string> requiredEngines{ ///< The list of required engines
-        "6-6", "5-5", "4-4", "3-3", "2-2", "1-1", "0-0"
-    };
+/* *********************************************************************
+Class Name: Round
+Purpose: Manages the lifecycle of a single game round, including engine
+         tracking, turn order, passing status, and win conditions.
+********************************************************************* */
+class Round {
 
 public:
+    // --- 2. Constructors ---
     Round();
 
-    /**
-    * @brief Serializes the complete state of the round.
-    * Ensures all turn and engine data is preserved in the JSON save file.
-    */    
-   
-    // round state
+    // --- 3. Destructor ---
+    virtual ~Round() {}
+
+    // --- 4. Selectors ---
     bool isRoundOver() const;
-    void roundOver();
-    void nextRound();
     int getRoundNum() const;
-
-    //for serialization
-    void setRoundNum(int roundNum);
-
-    // engine logic
-    void updateRequiredEngine();
-    void incEIndex();
-    void setEngine(const std::string& engine);
-    void setRequiredEngine();
-    std::string getEngine() const;
+    //std::string getEngine() const;
     std::string getRequiredEngine() const;
-    void determineRequiredEngine();
-
-    /**
-     * @brief Checks if the provided hand contains the engine required for the current round.
-     * @param hand The vector of tiles to search.
-     * @return The engine tile string if found, otherwise an empty string.
-     */
-    std::string determineEngine(const std::vector<std::string>& hand);
-
-    // player turn tracking
-    void setCurrentPlayer(int currentPlayer);
-    void setNextPlayer(int nextPlayer);
-
     int getCurrentPlayer() const;
     int getNextPlayer() const;
+    bool bothPassed() const;
+    bool isPassed(int playerIndex) const;
+    std::string yesNo(bool stateValue) const;
 
-    // passing
-    void resetPasses();
+    // --- 5. Mutators ---
+    void roundOver();
+    void nextRound();
+    void setRoundNum(int roundNumber);
+    void setCurrentPlayer(int playerIndex);
+    void setNextPlayer(int playerIndex);
     void setPassed(int playerIndex);
     void resetPass(int playerIndex);
-    void clearPassed(int playerIndex);
+    void resetPasses();
 
-    //passing logic
-    /** @brief Returns true if both players have passed consecutively (tied game). */
-    bool bothPassed() const;
-    bool isPassed(bool player) const;
+    // --- 6. Utility Functions ---
+    void determineRequiredEngine();
+    std::string determineEngine(const std::vector<std::string>& playerHand);
+    Player* checkWinner(Player* humanPlayer, Player* computerPlayer);
+    void incEIndex();
 
-    // helpers
-    std::string yesNo(bool value) const;
+private:
+    // --- 7. Variables ---
+    int roundNum;
+    int engineIndex;
+    int currentPlayer;
+    int nextPlayer;
+    bool roundOverFlag;
+    std::string engine;
+    std::string requiredEngine;
 
-    /**
-    * @brief Evaluates hands to see if a player has emptied their hand.
-    * @return Pointer to the winning Player object, or nullptr if the round continues.
-    */    
-    Player* checkWinner(Player* human, Player* computer);
+    // Array tracking individual pass status for both players (0: Human, 1: Computer)
+    std::array<bool, 2> passed;
+
+    // The list of possible engines in descending order
+    std::vector<std::string> requiredEngines;
+
 };

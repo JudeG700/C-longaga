@@ -4,51 +4,105 @@
 #include <deque>
 #include <string>
 
-// Including these now makes sure they are ready when you uncomment cereal later
-#include <cereal/archives/binary.hpp>
-#include <cereal/archives/json.hpp>
-#include <cereal/types/vector.hpp>
-#include <cereal/types/string.hpp>
-#include <cereal/types/array.hpp>
-#include <cereal/types/deque.hpp>
-
+/* *********************************************************************
+Class Name: Layout
+Purpose: Manages the sequence of tiles played on the table (the chain).
+         Provides functionality to add tiles to either end and retrieve
+         the current playable pip values.
+********************************************************************* */
 class Layout {
-private:
-    std::deque<std::string> dominoChain; ///< The domino chain formed by players
 
 public:
+    // --- 1. Constants ---
+    // (None defined for this class)
+
+    // --- 2. Constructors ---
+
+    /* *********************************************************************
+    Function Name: Layout (Default)
+    Purpose: Initializes an empty layout for the game board.
+    Parameters: none
+    Algorithm:
+                1) Initialize an empty deque of strings.
+    ********************************************************************* */
     Layout() {}
 
-    /**
-        * @brief Cereal serialization for the domino layout.
-        * Maps the deque to the "domino_chain" key in JSON.
-        */
+    // --- 3. Destructor ---
+    ~Layout() {}
 
- 
-    /** @brief Appends a tile to the right-hand side of the layout. */
-    void addRight(std::string tile);
+    // --- 4. Selectors ---
 
-    bool isEmpty()
-    {
-        return dominoChain.empty();
-    }
+    /* *********************************************************************
+    Function Name: isEmpty
+    Purpose: Checks if the board currently has any tiles.
+    Parameters: none
+    Return Value: bool, true if the chain is empty, false otherwise.
+    ********************************************************************* */
+    bool isEmpty() const;
 
-    /** @brief Appends a tile to the left-hand side of the layout. */
-    void addLeft(std::string tile);
+    /* *********************************************************************
+    Function Name: returnLeft
+    Purpose: Returns the pip value available on the left-most tile.
+    Parameters: none
+    Return Value: int, pip value of the left end, or -1 if empty.
+    ********************************************************************* */
+    int returnLeft() const;
 
-    /** * @brief Returns the pip value available on the left-most tile.
-        * @return Integer value of the left end, or -1 if empty.
-        */
-    int returnLeft();
+    /* *********************************************************************
+    Function Name: returnRight
+    Purpose: Returns the pip value available on the right-most tile.
+    Parameters: none
+    Return Value: int, pip value of the right end, or -1 if empty.
+    ********************************************************************* */
+    int returnRight() const;
 
-    /** * @brief Returns the pip value available on the right-most tile.
-        * @return Integer value of the right end, or -1 if empty.
-        */
-    int returnRight();
+    /* *********************************************************************
+    Function Name: getChain
+    Purpose: Returns a copy of the current domino sequence.
+    Parameters: none
+    Return Value: std::deque<std::string>, a copy of the internal chain
+                  (Encapsulation rule: return a copy, not a reference).
+    ********************************************************************* */
+    std::deque<std::string> getChain() const;
 
-    /** @brief Clears all tiles from the board for a new round. */
+    // --- 5. Mutators ---
+
+    /* *********************************************************************
+    Function Name: addRight
+    Purpose: Appends a tile to the right-hand side of the layout.
+    Parameters:
+                tileString: std::string representation of the domino.
+    Algorithm:
+                1) Push the tile string to the back of the deque.
+    ********************************************************************* */
+    void addRight(std::string tileString);
+
+    /* *********************************************************************
+    Function Name: addLeft
+    Purpose: Appends a tile to the left-hand side of the layout.
+    Parameters:
+                tileString: std::string representation of the domino.
+    Algorithm:
+                1) Push the tile string to the front of the deque.
+    ********************************************************************* */
+    void addLeft(std::string tileString);
+
+    /* *********************************************************************
+    Function Name: clearChain
+    Purpose: Clears all tiles from the board for a new round.
+    Parameters: none
+    Algorithm:
+                1) Remove all elements from the internal deque.
+    ********************************************************************* */
     void clearChain();
 
-    /** @brief Returns a copy of the current domino sequence. */
-    std::deque<std::string> getChain() const;
-    };
+protected:
+    // (No protected members)
+
+private:
+    // --- 6. Variables ---
+
+    // Mnemonic name for the container holding the game's tile sequence
+    std::deque<std::string> dominoChain;
+
+};

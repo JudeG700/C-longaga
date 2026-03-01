@@ -3,57 +3,106 @@
 #include <vector>
 #include <string>
 
-#include <cereal/archives/binary.hpp>
-#include <cereal/archives/json.hpp>
-#include <cereal/types/vector.hpp>
-#include <cereal/types/string.hpp>
-
-/**
- * @class Stock
- * @brief Manages the collection of all dominoes not currently in a player's hand.
- * * This class handles the initialization of a standard double-six set (28 tiles),
- * the shuffling logic using a Fisher-Yates approach, and the distribution
- * of tiles via dealing or drawing.
- */
-class Stock
-{
-private:
-    std::vector<std::string> boneyard; ///< Internal storage for available dominoes.
-    static constexpr short TILES = 8;  ///< Number of tiles to be dealt per player at round start.
-    const short MAXPIP = 6;
+/* *********************************************************************
+Class Name: Stock
+Purpose: Manages the collection of all dominoes not currently in a player's
+         hand (the boneyard). Handles initialization of the 28-tile set,
+         shuffling logic, and tile distribution.
+********************************************************************* */
+class Stock {
 
 public:
+    // --- 1. Constants ---
+    // Rule: Use symbolic constants, no magic numbers.
+    static const short INITIAL_DEAL_COUNT = 8;
+    static const short MAX_PIP_VALUE = 6;
+
+    // --- 2. Constructors ---
+    /* *********************************************************************
+    Function Name: Stock (Default)
+    Purpose: To initialize the boneyard with a full set of dominoes.
+    Parameters: none
+    Algorithm:
+                1) Create a standard double-six set (28 tiles).
+                2) Store them in the boneyard vector.
+    ********************************************************************* */
     Stock();
 
-    /**
-    * @brief Cereal serialization for the boneyard.
-    * Crucial for ensuring the deck remains in the same order upon loading.
-    */
+    // --- 3. Destructor ---
+    virtual ~Stock() {}
 
-    void setBoneyard(std::vector<std::string> tiles)
-    {
-        boneyard = tiles;
-    }
-
-    /** @brief Prints all remaining tiles in the boneyard to the console. */
+    // --- 4. Selectors ---
+    /* *********************************************************************
+    Function Name: display
+    Purpose: Prints all remaining tiles in the boneyard.
+    Parameters: none
+    Return Value: none (outputs to console)
+    ********************************************************************* */
     void display() const;
 
-    /** @brief Randomizes the order of tiles using a Fisher-Yates shuffle. */
-    void shuffle();
-    /** * @brief Removes and returns the top tile from the boneyard.
-     * @return std::string The tile value, or empty string if boneyard is empty.
-     */
-
-    std::string drawTile();
-
-    /** * @brief Deals a starting hand of tiles to a player.
-     * @return std::vector<std::string> A collection of 8 tiles (or fewer if stock is low).
-     */
-    std::vector<std::string> deal();
-
-    /** @brief Returns a copy of the boneyard vector for game logic checks. */
+    /* *********************************************************************
+    Function Name: getBoneyard
+    Purpose: Returns a copy of the current boneyard.
+    Parameters: none
+    Return Value: std::vector<std::string>, a copy of internal storage.
+    ********************************************************************* */
     std::vector<std::string> getBoneyard() const;
 
-    /** @brief Resets the boneyard to a full, shuffled 28-tile set for a new round. */
+    // --- 5. Mutators ---
+    /* *********************************************************************
+    Function Name: setBoneyard
+    Purpose: Explicitly sets the tiles in the boneyard (for loading games).
+    Parameters:
+                tiles: std::vector of strings.
+    Algorithm:
+                1) Assign the passed vector to the internal boneyard.
+    ********************************************************************* */
+    void setBoneyard(std::vector<std::string> tiles);
+
+    /* *********************************************************************
+    Function Name: shuffle
+    Purpose: Randomizes the order of tiles using a Fisher-Yates shuffle.
+    Parameters: none
+    Algorithm:
+                1) Iterate through the vector from back to front.
+                2) Swap each element with a randomly selected previous element.
+    ********************************************************************* */
+    void shuffle();
+
+    /* *********************************************************************
+    Function Name: drawTile
+    Purpose: Removes and returns the top tile from the boneyard.
+    Parameters: none
+    Return Value: std::string, the tile value or empty string if empty.
+    ********************************************************************* */
+    std::string drawTile();
+
+    /* *********************************************************************
+    Function Name: deal
+    Purpose: Deals a starting hand of tiles to a player.
+    Parameters: none
+    Return Value: std::vector<std::string>, a collection of 8 tiles.
+    ********************************************************************* */
+    std::vector<std::string> deal();
+
+    /* *********************************************************************
+    Function Name: reset
+    Purpose: Resets the boneyard to a full, shuffled 28-tile set.
+    Parameters: none
+    Algorithm:
+                1) Clear the current boneyard.
+                2) Re-populate with 28 tiles and shuffle.
+    ********************************************************************* */
     void reset();
-};
+
+    void empty();
+
+protected:
+    // (None)
+
+private:
+    // --- 6. Variables ---
+    // Mnemonic names and private for encapsulation
+    std::vector<std::string> boneyard;
+
+}; // <--- The most important semicolon in the world.

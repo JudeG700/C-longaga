@@ -1,3 +1,12 @@
+/*
+************************************************************
+* Name: Jude Ghacibeh
+* Project : Longaga C++
+* Class : CMPS-366 OPL
+* Date : 2/13/2026
+************************************************************
+*/
+
 #include "hand.h"
 
 
@@ -33,14 +42,12 @@ void Hand::displayHand()
     }
 }
 
+
 /* *********************************************************************
 Function Name: isEmptyHand
 Purpose: To determine if a player has run out of tiles (a "domino" condition).
 Parameters: None.
 Return Value: Boolean; true if the player holds no tiles.
-Algorithm:
-            1) Check the count of tiles currently in the player's possession.
-            2) Return true if the count is zero.
 Reference: None.
 ********************************************************************* */
 bool Hand::isEmptyHand()
@@ -48,6 +55,21 @@ bool Hand::isEmptyHand()
     return tiles.empty();
 }
 
+/* *********************************************************************
+Function Name: hasTile
+Purpose: To determine if a specific domino tile exists within the hand,
+         accounting for both possible string orientations of the pips.
+Parameters:
+   targetTile, a string representing the tile to find (e.g., "5-6").
+Return Value: Boolean; true if the tile or its numerical reverse is found.
+Algorithm:
+   1) Create a "flipped" version of the target string by swapping the
+      first and last characters (e.g., "5-6" becomes "6-5").
+   2) Iterate through the current collection of tiles in the hand.
+   3) Compare each tile to both the original target and the flipped version.
+   4) Return true immediately upon a match; return false if the loop ends.
+Reference: Assistance from gemini
+********************************************************************* */
 bool Hand::hasTile(std::string targetTile) {
     // We check both "6-6" and "6-6" (and in case of non-doubles, "5-6" and "6-5")
     std::string flipped = "";
@@ -70,14 +92,26 @@ Purpose: To retrieve a specific domino from the player's hand based on
 Parameters:
             index, an integer representing the selection position.
 Return Value: A string representing the chosen domino tile.
-Algorithm:
-            1) Access the tile at the specified location within the collection.
-            2) Return the string value of that tile.
-Reference: chatgpt built this
+Reference: Assistance from chatgpt
 ********************************************************************* */
 std::string Hand::getTileByIndex(int index) const
 {
     return tiles[index];
+}
+
+int Hand::getIndexByTile(std::string tile) const
+{
+    for (int i = 0; i < tiles.size(); i++)
+    {
+        if (tiles[i] == tile)
+        {
+            return i;
+        }
+    }
+
+    std::cout << "Tile not found: " << std::endl;
+    return -1;
+
 }
 
 /* *********************************************************************
@@ -91,7 +125,7 @@ Algorithm:
             1) Locate the specific tile in the collection using the index.
             2) Permanently remove the tile so it is no longer in the
                player's possession.
-Reference: None
+Reference: Assistance from chatgpt
 ********************************************************************* */
 void Hand::removeTile(int tileDex)
 {
@@ -105,7 +139,6 @@ Purpose: To clear all tiles from the player's possession, typically
 Parameters: None.
 Return Value: None.
 Algorithm:
-            1) Remove every tile currently held in the collection.
 Reference: None
 ********************************************************************* */
 void Hand::emptyHand()

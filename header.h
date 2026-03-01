@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <vector>
+#include <string>
 #include "layout.h"
 #include "layoutView.h"
 #include "stock.h"
@@ -10,9 +11,7 @@
 #include "player.h"
 #include "human.h"
 #include "computer.h"
-#include "move.h"
 #include "Tournament.h"
-#include "BlockedNumbersMemory.h"
 #include <fstream>
 #include <stdio.h>
 #include <Windows.h>

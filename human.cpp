@@ -78,6 +78,7 @@ std::vector<Player::PlayableOption> Human::findPlayableTiles(Hand hand, Round& g
     const int COMPUTER_INDEX = 1;
     bool oppPassed = gameRound.isPassed(COMPUTER_INDEX);
 
+    //left and right version of the same tile will be added if both can be added
     for (int i = 0; i < (int)tiles.size(); i++) {
         std::pair<int, int> p = parseTile(tiles[i]);
         bool isDouble = (p.first == p.second);
@@ -140,59 +141,28 @@ Player::Move Human::takeTurn(Stock &gameStock, Round gameRound, int leftEnd, int
     while (!choiceValid) {
         int choice = -1;
 
-        //you can't draw twice in one turn
-        if (move.draw)
-        {
-            do {
+        
+        do {
 
-                cout << "1=Play 2=Pass 3=Help ";
+            cout << "1=Play 2=Draw 3=Pass 4=Help ";
 
-                cin >> choice;
+            cin >> choice;
 
-                //made with google gemini
-                if (cin.fail()) {
-                    // 1. Clear the error flag
-                    cin.clear();
+            //made with google gemini
+            if (cin.fail()) {
+                // 1. Clear the error flag
+                cin.clear();
 
-                    // 2. Ignore everything in the buffer until the next newline
-                    // This "throws away" the bad characters (like the 'a')
-                    cin.ignore(1000, '\n');
+                // 2. Ignore everything in the buffer until the next newline
+                // This "throws away" the bad characters (like the 'a')
+                cin.ignore(1000, '\n');
 
-                    cout << "Invalid input!" << endl;
-                    continue; // Restart the loop
-                }
-            } while (choice < 1 || choice > 3);
-
-
-            if (choice == 2 || choice == 3)
-            {
-                choice++;
+                cout << "Invalid input!" << endl;
+                continue; // Restart the loop
             }
+        } while (choice < 1 || choice > 4);
 
-        }
-        else
-        {
-            do {
-
-                cout << "1=Play 2=Draw 3=Pass 4=Help ";
-
-                cin >> choice;
-
-                //made with google gemini
-                if (cin.fail()) {
-                    // 1. Clear the error flag
-                    cin.clear();
-
-                    // 2. Ignore everything in the buffer until the next newline
-                    // This "throws away" the bad characters (like the 'a')
-                    cin.ignore(1000, '\n');
-
-                    cout << "Invalid input!" << endl;
-                    continue; // Restart the loop
-                }
-            } while (choice < 1 || choice > 4);
-
-        }
+        
 
         // Main menu loop
 
@@ -230,7 +200,7 @@ Player::Move Human::takeTurn(Stock &gameStock, Round gameRound, int leftEnd, int
                 } */
 
                 if (it == tiles.end()) {
-                    std::cout << move.chosenTile << " isn't in your hand" << std::distance(tiles.begin(), it) << std::endl; //
+                    std::cout << move.chosenTile << " isn't in your hand" << std::endl; //
                 }
                 
 
@@ -262,6 +232,8 @@ Player::Move Human::takeTurn(Stock &gameStock, Round gameRound, int leftEnd, int
             //string tile = hand.getHandTiles()[move.tileIndex];
             pair<int, int> pips = parseTile(move.chosenTile);
             bool isDouble = (pips.first == pips.second);
+
+            
 
             if (move.side == 'L') {
                 // Verify left side match or double rule
@@ -298,27 +270,113 @@ Player::Move Human::takeTurn(Stock &gameStock, Round gameRound, int leftEnd, int
             // Verify boneyard availability before drawing
             if (gameStock.getBoneyard().empty()) {
                 cout << "Boneyard empty!" << endl;
+                choiceValid = false;
             }
-            else if (move.hasPlayableTiles)
+            else if (move.hasPlayableTiles) //checks if tile can be played
             {
                 cout << "Sorry. You still have tiles you can play." << endl;
-            } 
+                choiceValid = false;
+            }
             else{
 
                 string drawnTile = gameStock.drawTile();
 
                 hand.addTile(drawnTile);
+
                 cout << returnID() << " drew " << hand.getTileByIndex(hand.getHandTiles().size() - 1) << endl;
                 move.draw = true;
 
-                playableList = findPlayableTiles(hand, gameRound, leftEnd, rightEnd);
-                move.hasPlayableTiles = !playableList.empty();
 
-                //the turn isn't over yet as the player must play the tile or pass
+                pair<int, int> pips = parseTile(drawnTile);
+                bool isDouble = (pips.first == pips.second);
+
+                //chose the tile to play if you can play on both sides
+                //we check this cause it doesn't go to is playable function
+                if ((pips.first == leftEnd || pips.second == leftEnd) && (pips.first == rightEnd || pips.second == rightEnd) && (gameRound.isPassed(1) || isDouble))
+                {
+
+                    do {
+                        cout << "Side L or R (only choose right if opponent passed): ";
+                        cin >> move.side;
+
+                        //made with google gemini
+                            if (cin.fail()) {
+                                // 1. Clear the error flag
+                                cin.clear();
+
+                                // 2. Ignore everything in the buffer until the next newline
+                                // This "throws away" the bad characters (like the 'a')
+                                    cin.ignore(1000, '\n');
+
+                                cout << "Invalid input!" << endl;
+                                continue; // Restart the loop
+                            }
+
+                        move.side = toupper(move.side);
+
+
+                    } while (move.side != 'L' && move.side != 'R');
+                    move.chosenTile = drawnTile;
+                    choiceValid = true;
+                }
+                //otherwise it gets chosen for you
+                else
+                {
+                    if (pips.first == leftEnd || pips.second == leftEnd)
+                    {
+                        move.side = 'L';
+                        move.chosenTile = drawnTile;
+                    }
+                    else if (pips.first == rightEnd || pips.second == rightEnd && (gameRound.isPassed(1) || isDouble))
+                    {
+                        move.side = 'R';
+                        move.chosenTile = drawnTile;
+
+                    }
+                    else
+                    {
+                        cout << "Can't play " << drawnTile << " anywhere " << endl;
+                        move.draw = false;
+                        move.passed = true;
+                    }
+                    choiceValid = true;
+
+                }
+
+
+                /*
+                if (move.side == 'L') {
+                    // Verify left side match or double rule
+                    if (pips.first == leftEnd || pips.second == leftEnd) {
+                        choiceValid = true;
+                    }
+                    else {
+                        cout << "Invalid Left move. Tile doesn't match." << endl;
+                    }
+                }
+                else if (move.side == 'R') {
+                    // Verify right side match (requires double or opponent pass)
+                    const int COMPUTER_PLAYER_INDEX = 1;
+                    bool oppPassed = gameRound.isPassed(COMPUTER_PLAYER_INDEX);
+
+                    //if opponent passed or tile is a double
+                    if (isDouble || oppPassed) {
+                        if (pips.first == rightEnd || pips.second == rightEnd) {
+                            choiceValid = true;
+                        }
+
+                    }
+                    else {
+                        cout << "You can't place tiles on your opponent's side unless they've passed." << endl;
+                    }
+                } */
 
             }
 
-            choiceValid = false;
+                //the turn isn't over yet as the player must play the tile or pass
+
+            
+
 
         }
         //if they pass

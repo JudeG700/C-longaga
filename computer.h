@@ -94,7 +94,7 @@ public:
                 rightEnd: int, layout's current right end.
     Return Value: Move structure containing the AI's choice.
     ********************************************************************* */
-    Move takeTurn(Stock gameStock, Round gameRound, int leftEnd, int rightEnd) override;
+    Player::Move takeTurn(Stock &gameStock, Round gameRound, int leftEnd, int rightEnd) override;
 
     /* *********************************************************************
     Function Name: findPlayableTiles
@@ -130,7 +130,7 @@ public:
                 leftEnd, rightEnd: layout ends.
     Return Value: none (outputs recommendation to console).
     ********************************************************************* */
-    void help(Player* player, Stock gamestock, Round gameRound, int leftEnd, int rightEnd);
+    void help(Player* player, Move playerMove, Stock gamestock, Round gameRound, int leftEnd, int rightEnd);
 
 protected:
     // (None currently defined for this class)

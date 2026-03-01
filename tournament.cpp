@@ -1,3 +1,12 @@
+/*
+************************************************************
+* Name: Jude Ghacibeh
+* Project : Longaga C++
+* Class : CMPS-366 OPL
+* Date : 2/13/2026
+************************************************************
+*/
+
 #include "tournament.h"
 
 /* *********************************************************************
@@ -85,13 +94,42 @@ Algorithm:
             2) If the threshold is met, compare the human and computer scores.
             3) Identify the player with the higher total as the winner.
             4) Return the result or signal that the tournament continues.
-Reference: chatgpt helped with building this
+Reference: chatgpt helped with implementing this
 ********************************************************************* */
 std::string Tournament::determineWinner()
 {
+    //if the human player's score or the computer player's score is greater than the target score?
     if (humanScore >= targetScore || computerScore >= targetScore)
     {
         return (humanScore > computerScore) ? "Human" : "Computer";
     }
-    return ""; // Tournament continues
+    return ""; 
+}
+
+/* *********************************************************************
+Function Name: setComputerScore
+Purpose: To update the cumulative tournament score for the computer player.
+Parameters:
+   newScore, an integer representing the updated score value.
+Return Value: None.
+Algorithm:
+   1) Assign the value of newScore to the member variable computerScore.
+Reference: None.
+********************************************************************* */
+void Tournament::setComputerScore(int newScore) {
+    computerScore = newScore;
+}
+
+/* *********************************************************************
+Function Name: setHumanScore
+Purpose: To update the cumulative tournament score for the human player.
+Parameters:
+   newScore, an integer representing the updated score value.
+Return Value: None.
+Algorithm:
+   1) Assign the value of newScore to the member variable humanScore.
+Reference: None.
+********************************************************************* */
+void Tournament::setHumanScore(int newScore) {
+    humanScore = newScore;
 }

@@ -1,363 +1,315 @@
+/*
+************************************************************
+* Name: Jude Ghacibeh
+* Project : Longaga C++
+* Class : CMPS-366 OPL
+* Date : 2/13/2026
+************************************************************
+*/
+
 #include "round.h"
+#include <iostream>
+#include <string>
 
 using namespace std;
 
 /* *********************************************************************
 Function Name: Round (Constructor)
-Purpose: To initialize the Round object with default state values.
-Parameters: none
-Return Value: none
-Reference: none
+Purpose: To initialize a new round object with default game state values.
+Parameters: None.
+Return Value: None.
+Algorithm:
+   1) Initialize round number to 1 and engine index to 0.
+   2) Set default engine tiles to "6-6".
+   3) Populate the list of rotating required engines from 6-6 to 0-0.
+   4) Reset all player pass statuses to false.
+Reference: re-modeled all functions and constructors with help of Gemini.
 ********************************************************************* */
-Round::Round() = default;
+Round::Round() :
+    roundNum(1),
+    engineIndex(0),
+    currentPlayer(0),
+    nextPlayer(0),
+    roundOverFlag(false)
+    {
+    requiredEngines = { "6-6", "5-5", "4-4", "3-3", "2-2", "1-1", "0-0" };
+    passed.fill(false);
+    }
 
 /* *********************************************************************
 Function Name: isRoundOver
 Purpose: To check if the current round has concluded.
-Parameters: none
-Return Value: boolean, true if round is over, false otherwise.
-Reference: none
+Parameters: None.
+Return Value: Boolean; true if the round is over.
+Reference: None.
 ********************************************************************* */
-bool Round::isRoundOver() const
-{
+bool Round::isRoundOver() const {
     return roundOverFlag;
 }
 
 /* *********************************************************************
 Function Name: roundOver
-Purpose: To manually signal the end of a round.
-Parameters: none
-Return Value: none
-Reference: none
+Purpose: To signal that the current round has ended.
+Parameters: None.
+Return Value: None.
+Reference: None.
 ********************************************************************* */
-void Round::roundOver()
-{
+void Round::roundOver() {
     roundOverFlag = true;
 }
 
 /* *********************************************************************
 Function Name: nextRound
-Purpose: To reset the game state for a new round.
-Parameters: none
-Return Value: none
+Purpose: To advance the game state to the next round.
+Parameters: None.
+Return Value: None.
 Algorithm:
-            1) Reset the roundOverFlag to false.
-            2) Increment the round counter.
-            3) Reset the pass flags for both players.
-Reference: none
+   1) Set roundOverFlag to false to allow new play.
+   2) Increment the round count.
+   3) Reset passes for all players.
+Reference: None.
 ********************************************************************* */
-void Round::nextRound()
-{
+void Round::nextRound() {
     roundOverFlag = false;
     roundNum++;
     resetPasses();
 }
 
-void Round::setRoundNum(int roundNum)
-{
-    this->roundNum = roundNum;
+/* *********************************************************************
+Function Name: setRoundNum
+Purpose: To manually set the current round number.
+Parameters:
+   roundNumber, an integer representing the new round count.
+Return Value: None.
+Reference: None.
+********************************************************************* */
+void Round::setRoundNum(int roundNumber) {
+    this->roundNum = roundNumber;
 }
 
 /* *********************************************************************
 Function Name: getRoundNum
 Purpose: To retrieve the current round number.
-Parameters: none
-Return Value: integer, the current round.
-Reference: none
+Parameters: None.
+Return Value: Integer representing the round count.
+Reference: None.
 ********************************************************************* */
-int Round::getRoundNum() const
-{
+int Round::getRoundNum() const {
     return roundNum;
 }
 
 /* *********************************************************************
-Function Name: updateRequiredEngine
-Purpose: To update the engine tile required for the current round.
-Parameters: none
-Return Value: none
-Algorithm:
-            1) Check if the engine index is within bounds of the engines vector.
-            2) Set the required engine to the engine at that index.
-Reference: none
-********************************************************************* */
-void Round::updateRequiredEngine()
-{
-    if (engineIndex < requiredEngines.size())
-    {
-        requiredEngine = requiredEngines[engineIndex];
-    }
-}
-/* *********************************************************************
 Function Name: incEIndex
-Purpose: To cycle to the next required engine in the sequence.
-Parameters: none
-Return Value: none
+Purpose: To increment the index used to track which double is required.
+Parameters: None.
+Return Value: None.
 Algorithm:
-            1) Increment the engine index so the next engine is picked (if a round passes).
-            2) Use modulo to wrap back to the start if the end is reached.
-Reference: none
+   1) Increment the index by one.
+   2) Use modulo operation with the size of requiredEngines to wrap around.
+Reference: Built by me but static_cast added by gemini
 ********************************************************************* */
-void Round::incEIndex()
-{
-    engineIndex = (engineIndex + 1) % requiredEngines.size();
+void Round::incEIndex() {
+    engineIndex = (engineIndex + 1) % static_cast<int>(requiredEngines.size());
 }
 
-/* *********************************************************************
-Function Name: setEngine
-Purpose: To set the engine tile played for the round.
-Parameters:
-            engine, a string representing the tile.
-Return Value: none
-Reference: none
-********************************************************************* */
-void Round::setEngine(const string& engine)
-{
-    this->engine = engine;
-}
-
-/* *********************************************************************
-Function Name: setRequiredEngine
-Purpose: To set the required engine based on the current index.
-Parameters: none
-Return Value: none
-Reference: none
-********************************************************************* */
-void Round::setRequiredEngine()
-{
-    requiredEngine = requiredEngines[engineIndex];
-}
 
 /* *********************************************************************
 Function Name: getEngine
-Purpose: To retrieve the engine tile played.
-Parameters: none
-Return Value: string, the engine tile.
-Reference: none
+Purpose: To retrieve the engine tile currently on the board.
+Parameters: None.
+Return Value: String representation of the engine tile.
+Reference: None.
 ********************************************************************* */
-string Round::getEngine() const
-{
+/**string Round::getEngine() const {
     return engine;
-}
+} */
 
 /* *********************************************************************
 Function Name: getRequiredEngine
-Purpose: To retrieve the engine required to start the round.
-Parameters: none
-Return Value: string, the required engine tile.
-Reference: none
+Purpose: To retrieve the tile required to start the current round.
+Parameters: None.
+Return Value: String representing the required double.
+Reference: None.
 ********************************************************************* */
-string Round::getRequiredEngine() const
-{
+string Round::getRequiredEngine() const {
     return requiredEngine;
 }
 
 /* *********************************************************************
 Function Name: determineEngine
-Purpose: To check if a specific hand contains the required engine.
+Purpose: To check if a specific hand contains the required engine tile.
 Parameters:
-            hand, a vector of strings representing the player's tiles.
-Return Value: string, the engine tile if found, otherwise an empty string.
+   playerHand, a vector of strings passed by reference.
+Return Value: The matching tile string, or an empty string if not found.
 Algorithm:
-            1) Iterate through the player's hand.
-            2) If a tile matches the required engine, return that tile.
-            3) Return empty string if no match is found.
-Reference: chatgpt built
+   1) Iterate through the player's tiles.
+   2) Compare each tile to the requiredEngine value.
+   3) Return the tile if a match is found.
+Reference: Assistance from chatgpt.
 ********************************************************************* */
-string Round::determineEngine(const vector<string>& hand)
-{
-    for (const auto& tile : hand)
-    {
-        if (tile == requiredEngine)
-        {
+string Round::determineEngine(const vector<string>& playerHand) {
+    for (const auto& tile : playerHand) {
+        if (tile == requiredEngine) {
             return tile;
         }
     }
     return "";
 }
 
-void Round::determineRequiredEngine()
-{   
-    int index = roundNum - 1;
-    index = index % 7;
-    requiredEngine = requiredEngines[roundNum - 1];
-
+/* *********************************************************************
+Function Name: determineRequiredEngine
+Purpose: To calculate which engine is required based on the round number.
+Parameters: None.
+Return Value: None.
+Algorithm:
+   1) Calculate the index using (roundNum - 1) % 7.
+   2) Set the requiredEngine from the pre-defined list.
+Reference: None.
+********************************************************************* */
+void Round::determineRequiredEngine() {
+    int index = (roundNum - 1) % requiredEngines.size();
+    requiredEngine = requiredEngines[index];
 }
-// ---------------- Players ----------------
+
 /* *********************************************************************
 Function Name: setCurrentPlayer
-Purpose: To set which player is currently taking a turn.
+Purpose: To update the index of the player whose turn it is.
 Parameters:
-            currentPlayer, an integer (0 or 1).
-Return Value: none
-Reference: none
+   playerIndex, an integer (0 for Human, 1 for Computer).
+Return Value: None.
+Reference: None.
 ********************************************************************* */
-void Round::setCurrentPlayer(int currentPlayer)
-{
-    this->currentPlayer = currentPlayer;
+void Round::setCurrentPlayer(int playerIndex) {
+    this->currentPlayer = playerIndex;
 }
 
 /* *********************************************************************
 Function Name: setNextPlayer
-Purpose: To set the index of the next player.
+Purpose: To update the index of the player who will move next.
 Parameters:
-            nextPlayer, an integer.
-Return Value: none
-Reference: none
+   playerIndex, an integer.
+Return Value: None.
+Reference: None.
 ********************************************************************* */
-void Round::setNextPlayer(int nextPlayer)
-{
-    this->nextPlayer = nextPlayer;
+void Round::setNextPlayer(int playerIndex) {
+    this->nextPlayer = playerIndex;
 }
 
 /* *********************************************************************
 Function Name: getCurrentPlayer
-Purpose: To get the index of the current player.
-Parameters: none
-Return Value: integer, the current player index.
-Reference: none
+Purpose: To retrieve the index of the current active player.
+Parameters: None.
+Return Value: Integer player index.
+Reference: None.
 ********************************************************************* */
-int Round::getCurrentPlayer() const
-{
+int Round::getCurrentPlayer() const {
     return currentPlayer;
 }
 
 /* *********************************************************************
 Function Name: getNextPlayer
-Purpose: To get the index of the next player.
-Parameters: none
-Return Value: integer, the next player index.
-Reference: none
+Purpose: To retrieve the index of the player next in turn.
+Parameters: None.
+Return Value: Integer player index.
+Reference: None.
 ********************************************************************* */
-int Round::getNextPlayer() const
-{
+int Round::getNextPlayer() const {
     return nextPlayer;
 }
 
-// ---------------- Passing ----------------
-
 /* *********************************************************************
 Function Name: resetPasses
-Purpose: To reset the pass status for both players.
-Parameters: none
-Return Value: none
-Algorithm:
-            1) Set both indices of the passed array to false.
-Reference: none
+Purpose: To clear the pass status for all players at the start of a turn cycle.
+Parameters: None.
+Return Value: None.
+Reference: None.
 ********************************************************************* */
-void Round::resetPasses()
-{
+void Round::resetPasses() {
     passed[0] = false;
     passed[1] = false;
 }
 
 /* *********************************************************************
 Function Name: setPassed
-Purpose: To record that a player has passed their turn.
+Purpose: To record that a specific player has passed their turn.
 Parameters:
-            playerIndex, an integer.
-Return Value: none
-Reference: none
+   playerIndex, an integer representing the player.
+Return Value: None.
+Reference: None.
 ********************************************************************* */
-void Round::setPassed(int playerIndex)
-{
+void Round::setPassed(int playerIndex) {
     passed[playerIndex] = true;
 }
 
 /* *********************************************************************
 Function Name: resetPass
-Purpose: To clear a single player's pass status.
+Purpose: To clear the pass status for a specific player after they move.
 Parameters:
-            playerIndex, an integer.
-Return Value: none
-Reference: none
+   playerIndex, an integer representing the player.
+Return Value: None.
+Reference: None.
 ********************************************************************* */
-void Round::resetPass(int playerIndex)
-{
-    passed[playerIndex] = false;
-}
-
-/* *********************************************************************
-Function Name: clearPassed
-Purpose: Alias for resetPass.
-Parameters:
-            playerIndex, an integer.
-Return Value: none
-Reference: none
-********************************************************************* */
-void Round::clearPassed(int playerIndex)
-{
+void Round::resetPass(int playerIndex) {
     passed[playerIndex] = false;
 }
 
 /* *********************************************************************
 Function Name: bothPassed
-Purpose: To detect if both players have passed consecutively (blocked game).
-Parameters: none
-Return Value: boolean, true if both passed.
-Algorithm:
-            1) Return the logical AND of when both players passed.
-Reference: chatgpt
+Purpose: To check if both players have passed consecutively.
+Parameters: None.
+Return Value: Boolean; true if both pass flags are set.
+Reference: None.
 ********************************************************************* */
-bool Round::bothPassed() const
-{
+bool Round::bothPassed() const {
     return passed[0] && passed[1];
 }
 
 /* *********************************************************************
 Function Name: isPassed
-Purpose: To check if a specific player passed their last turn.
+Purpose: To check if a specific player is currently in a passed state.
 Parameters:
-            player, an integer/boolean index.
-Return Value: boolean status.
-Algorithm:
-            1) Return the passed status for the given index.
-Reference: none
+   playerIndex, an integer.
+Return Value: Boolean pass status.
+Reference: None.
 ********************************************************************* */
-bool Round::isPassed(bool player) const
-{
-    return passed[player];
+bool Round::isPassed(int playerIndex) const {
+    return passed[playerIndex];
 }
-
 
 /* *********************************************************************
 Function Name: yesNo
-Purpose: Utility to convert a boolean to a string for display.
+Purpose: Converts a boolean state to a printable "Yes" or "No" string.
 Parameters:
-            value, a boolean.
-Return Value: string, "Yes" or "No".
-Algorithm:
-            1) Return "Yes" if true, "No" if false.
-Reference: chatgpt helped build this function
+   stateValue, a boolean value.
+Return Value: A string.
+Reference: Assistance from chatgpt.
 ********************************************************************* */
-string Round::yesNo(bool value) const
-{
-    return value ? "Yes" : "No";
+string Round::yesNo(bool stateValue) const {
+    return stateValue ? "Yes" : "No";
 }
 
 /* *********************************************************************
 Function Name: checkWinner
-Purpose: To identify if a player has run out of tiles and won the round.
+Purpose: To determine if either player has won the round by emptying their hand.
 Parameters:
-            human, pointer to Human player.
-            computer, pointer to Computer player.
-Return Value: Player pointer to the winner, or nullptr if no winner yet.
+   humanPlayer, a Player object pointer. Passed by value.
+   computerPlayer, a Player object pointer. Passed by value.
+Return Value: A pointer to the winning Player, or nullptr if none.
 Algorithm:
-            1) Check if human hand is empty. If so, return human.
-            2) Check if computer hand is empty. If so, return computer.
-            3) Return nullptr if neither hand is empty.
-Reference: Logic for winner detection assisted by chatgpt
+   1) Access the human player's hand tiles; if empty, human wins.
+   2) Access the computer player's hand tiles; if empty, computer wins.
+   3) Otherwise, return nullptr.
+Reference: Assistance from chatgpt.
 ********************************************************************* */
-Player* Round::checkWinner(Player* human, Player* computer)
-{
-    if (human->getHand().getHandTiles().empty())
-    {
-        cout << "Player wins the round\n";
-        return human;
+Player* Round::checkWinner(Player* humanPlayer, Player* computerPlayer) {
+    // Access hand tiles via the hand object
+    if (humanPlayer->getHand().getHandTiles().empty()) {
+        cout << "Human wins the round" << endl;
+        return humanPlayer;
     }
-    if (computer->getHand().getHandTiles().empty())
-    {
-        cout << "Computer wins the round\n";
-        return computer;
+    if (computerPlayer->getHand().getHandTiles().empty()) {
+        cout << "Computer wins the round" << endl;
+        return computerPlayer;
     }
     return nullptr;
 }

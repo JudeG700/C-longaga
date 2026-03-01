@@ -213,16 +213,16 @@ void saveGameState(string filename, Hand humanHand, Hand computerHand, Stock& ga
 	for (auto const& tile : gameStock.getBoneyard()) outFile << tile << " ";
 	outFile << "\n\n";
 
-	cout << "PPPPPPPPPPPPPPPPPPPPPP: " << currentRound.getCurrentPlayer() << endl;
-	cout << "OOOOOOOOOOOOOOOOOOOOOO: " << currentRound.isPassed(currentRound.getCurrentPlayer()) << endl;
+	cout << "current player: " << currentRound.getCurrentPlayer() << endl;
+	cout << "did they pass?: " << currentRound.isPassed(currentRound.getCurrentPlayer()) << endl;
 	outFile << "Previous Player Passed: " << (currentRound.isPassed(currentRound.getCurrentPlayer()) ? "Yes" : "No") << "\n\n";
+	//outFile << "Previous Player Passed: " << (currentRound.isPassed(currentRound.getNextPlayer()) ? "Yes" : "No") << "\n\n";
 
 	// Assuming 0 is Human and 1 is Computer
 	outFile << "Next Player: " << (currentRound.getNextPlayer() == 1 ? "Computer" : "Human") << "\n";
-	cout << "NNNNNNNNNNNNNNNNNNNNNN: " << currentRound.getCurrentPlayer() << endl;
+	cout << "next player: " << currentRound.getNextPlayer() << endl;
 
 	cout << "Game saved to " << filename << endl;
-	gameStock.reset();
 
 	outFile.close();
 
@@ -429,17 +429,22 @@ void loadGameState (string filename, Player* human, Player* computer, Stock& gam
 
 				std::string nextName = line.substr(colonPos + 1);
 
+
 				if (nextName.find("Computer") != std::string::npos)
 				{
+					//set current player to computer
 					currentRound.setCurrentPlayer(1);
 					currentRound.setNextPlayer(0);
 				}
 				else if (nextName.find("Human") != std::string::npos)
 				{
+					//set current player to human
 					currentRound.setCurrentPlayer(0);
 					currentRound.setNextPlayer(1);
 				}
 
+				//In the previous save, the next player is the current player now
+				//likewise, the one that went before is also the next player as well
 				if (!passVal)
 				{
 					currentRound.resetPass(currentRound.getNextPlayer());
@@ -600,7 +605,7 @@ bool applyMove(
 			cout << player->returnID() << " played " << move.chosenTile << " on left side of layout " << endl;
 		}
 
-
+		 
 	}
 	else if (move.side == 'R') {
 
@@ -1099,7 +1104,7 @@ int main()
 			cout << endl;
 
 			//if both players take their turn, ensure to offer human player to save
-			if (placedTile[0] == 1 && placedTile[1] == 1)
+			/*if (placedTile[0] == 1 && placedTile[1] == 1)
 			{
 				humanHand = players[0]->getHand();
 				computerHand = players[1]->getHand();
@@ -1108,7 +1113,7 @@ int main()
 				initSave(players[0]->getHand(), players[1]->getHand(), gameStock, gameTournament, layout, gameRound);
 				placedTile[0] = 0;
 				placedTile[1] = 0;
-			} 
+			} */
 
 			
 			cout << "Previous Player Passed: " << gameRound.yesNo(gameRound.isPassed(gameRound.getNextPlayer())) << endl;
@@ -1207,6 +1212,18 @@ int main()
 			}
 			
 			
+			//if both players take their turn, ensure to offer human player to save
+			if (placedTile[0] == 1 && placedTile[1] == 1)
+			{
+				humanHand = players[0]->getHand();
+				computerHand = players[1]->getHand();
+				cout << endl;
+				cout << "_______________________________________" << endl;
+				initSave(players[0]->getHand(), players[1]->getHand(), gameStock, gameTournament, layout, gameRound);
+				placedTile[0] = 0;
+				placedTile[1] = 0;
+			} 
+
 			//let next player take their turn
 			gameRound.setCurrentPlayer(nextIdx);
 

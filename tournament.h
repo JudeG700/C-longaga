@@ -2,70 +2,117 @@
 
 #include <iostream>
 #include <string>
-
 #include "player.h"
 
-#include <cereal/archives/binary.hpp>
-#include <cereal/archives/json.hpp>
-#include <cereal/types/vector.hpp>
-#include <cereal/types/string.hpp>
-#include <cereal/types/array.hpp>
-
-
-/**
- * @class Tournament
- * @brief Oversees the high-level scoring and victory conditions for the game session.
- * * This class maintains the cumulative scores for both the Human and Computer players
- * across multiple rounds. It defines the 'target score' required to win the
- * overall tournament and provides the logic to determine the final champion.
- */
-class Tournament
-{
-private:
-    Player* p1;             ///< Pointer to the Human player object.
-    Player* p2;             ///< Pointer to the Computer player object.
-    int humanScore = 0;     ///< Cumulative tournament points for the Human.
-    int computerScore = 0;   ///< Cumulative tournament points for the Computer.
-    int targetScore = 200;  ///< The score threshold required to win the tournament.
+/* *********************************************************************
+Class Name: Tournament
+Purpose: Oversees the high-level scoring and victory conditions for the
+         game session. Maintains cumulative scores across rounds and
+         defines the target threshold for the final champion.
+********************************************************************* */
+class Tournament {
 
 public:
 
-    /**
-     * @brief Serializes the tournament's progress.
-     * Only the cumulative scores are archived to JSON, as the player objects
-     * are reconstructed during the loading process.
-     */
+    // --- 1. Constants ---
+// Symbolic constant to avoid magic numbers in the code
 
-    /** @brief Adds points earned in a round to the Human's tournament total. */
-    void addPlayerScore(int points);
+    // --- 2. Constructors ---
+    /* *********************************************************************
+    Function Name: Tournament (Default)
+    Purpose: To initialize a tournament with starting scores and defaults.
+    Parameters: none
+    Algorithm:
+                1) Use member initialization to set scores to 0.
+                2) Set target score to the default winning threshold.
+    ********************************************************************* */
+    Tournament() : humanScore(0), computerScore(0), targetScore(0) {};
 
-    /** @brief Adds points earned in a round to the Computer's tournament total. */
-    void addComputerScore(int points);
+    // --- 3. Destructor ---
+    virtual ~Tournament() {}
 
-    /** @return The Human player's current cumulative score. */
+    // --- 4. Selectors ---
+
+    /* *********************************************************************
+    Function Name: getPlayerScore
+    Purpose: Returns the Human player's current cumulative score.
+    Return Value: int, total points.
+    ********************************************************************* */
     int getPlayerScore() const;
 
-    /** @return The Computer player's current cumulative score. */
+    /* *********************************************************************
+    Function Name: getComputerScore
+    Purpose: Returns the Computer player's current cumulative score.
+    Return Value: int, total points.
+    ********************************************************************* */
     int getComputerScore() const;
 
-    
-    /** @return The fixed target score (e.g., 200) needed to end the tournament. */
+    /* *********************************************************************
+    Function Name: getTournScore
+    Purpose: Returns the target score needed to win the tournament.
+    Return Value: int, target threshold.
+    ********************************************************************* */
     int getTournScore() const;
 
-    void setTournScore(int targetScore);
+    // --- 5. Mutators ---
 
-    void setHumanScore(int humanScore)
-    {
-        this->humanScore = humanScore;
+    /* *********************************************************************
+    Function Name: addPlayerScore
+    Purpose: Adds round points to the Human's tournament total.
+    Parameters: points, integer value.
+    ********************************************************************* */
+    void addPlayerScore(int points);
 
-    }
-    void setComputerScore(int humanScore)
-    {
-        this->computerScore = computerScore;
+    /* *********************************************************************
+    Function Name: addComputerScore
+    Purpose: Adds round points to the Computer's tournament total.
+    Parameters: points, integer value.
+    ********************************************************************* */
+    void addComputerScore(int points);
 
-    }
-    /** * @brief Checks if either player has reached the target score.
-     * @return A string ("Human" or "Computer") identifying the winner, or an empty string if ongoing.
-     */
+    /* *********************************************************************
+    Function Name: setTournScore
+    Purpose: Updates the score threshold required to win the tournament.
+    Parameters: winningThreshold, integer.
+    ********************************************************************* */
+    void setTournScore(int winningThreshold);
+
+    /* *********************************************************************
+    Function Name: setHumanScore
+    Purpose: Explicitly sets the human's tournament score (for loading).
+    Parameters: newScore, integer.
+    ********************************************************************* */
+    void setHumanScore(int newScore);
+
+    /* *********************************************************************
+    Function Name: setComputerScore
+    Purpose: Explicitly sets the computer's tournament score (for loading).
+    Parameters: newScore, integer.
+    ********************************************************************* */
+    void setComputerScore(int newScore);
+
+    // --- 6. Utility Functions ---
+
+    /* *********************************************************************
+    Function Name: determineWinner
+    Purpose: Evaluates scores against the target to identify a champion.
+    Return Value: std::string, "Human", "Computer", or empty string.
+    Algorithm:
+                1) Compare scores to targetScore.
+                2) Return winner's ID or empty if no winner yet.
+    ********************************************************************* */
     std::string determineWinner();
-};
+
+protected:
+    // (None)
+
+private:
+
+    // Cumulative scores
+    int humanScore;
+    int computerScore;
+
+    // The score threshold required to win
+    int targetScore;
+
+}; 

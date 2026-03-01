@@ -4,12 +4,6 @@
 #include <vector>
 #include <string>
 
-#include <cereal/archives/binary.hpp>
-#include <cereal/archives/json.hpp>
-#include <cereal/types/vector.hpp>
-#include <cereal/types/string.hpp>
-#include <cereal/types/array.hpp>
-
 /**
  * @class Hand
  * @brief Management class for a player's collection of domino tiles.
@@ -25,16 +19,13 @@ class Hand
 
 public:
 
+
     /**
      * @brief Cereal serialization function.
      * Maps the internal 'tiles' vector to the JSON key "tiles" during save/load.
      * @param archive The archive object (JSON) being read from or written to.
      */
-    template<class Archive>
-    void serialize(Archive& archive)
-    {
-        archive(cereal::make_nvp("tiles", tiles));
-    }
+    
 
     /** @brief Default constructor. Initializes an empty hand. */
     Hand();
@@ -50,6 +41,8 @@ public:
      * @return std::string The tile string (e.g., "1-2").
      */
     std::string getTileByIndex(int index) const;
+
+    int getIndexByTile(std::string tile) const;
 
     /** @brief Removes a tile from the hand using its vector index. */
     void removeTile(int tileDex);

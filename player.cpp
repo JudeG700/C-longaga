@@ -10,7 +10,7 @@
 #pragma once
 #include "hand.h"
 #include <vector>
-#include "move.h"
+//#include "move.h"
 #include "stock.h"
 #include "player.h"
 #include "round.h"
@@ -88,6 +88,19 @@ void Player::emptyHand()
     hand.emptyHand();
 }
 
+std::string Player::getTileByIndex(int index) const
+{
+    std::string tile;
+    tile = hand.getTileByIndex(index);
+    return tile;
+}
+
+int Player::getIndexByTile(std::string tile) const
+{
+    int index;
+    index = hand.getIndexByTile(tile);
+    return index;
+}
 /* *********************************************************************
 Function Name: removeTile
 Purpose: To remove a specific tile from the hand by index.

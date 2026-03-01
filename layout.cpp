@@ -1,4 +1,12 @@
 
+/*
+************************************************************
+* Name: Jude Ghacibeh
+* Project : Longaga C++
+* Class : CMPS-366 OPL
+* Date : 2/13/2026
+************************************************************
+*/
 
 #include <iostream>
 #include <deque>
@@ -17,9 +25,23 @@ Algorithm:
             3) Convert the character to its numeric integer equivalent and return it.
 Reference: None.
 ********************************************************************* */
-int Layout::returnLeft()
+int Layout::returnLeft() const
 {
     return dominoChain.front()[0] - '0';
+}
+
+
+/* *********************************************************************
+Function Name: returnLeft
+Purpose: To check if the domino chain is empty.
+Parameters: None.
+Return Value: Integer, representing the outward-facing pips on the left.
+
+Reference: None.
+********************************************************************* */
+bool Layout::isEmpty() const
+{
+    return dominoChain.empty();
 }
 
 /* *********************************************************************
@@ -33,7 +55,7 @@ Algorithm:
             3) Convert the character to its numeric integer equivalent and return it.
 Reference: None.
 ********************************************************************* */
-int Layout::returnRight()
+int Layout::returnRight() const
 {
     return dominoChain.back()[2] - '0';
 }

@@ -168,58 +168,94 @@ Algorithm:
    3) Otherwise, score each move and suggest the highest-scoring option.
 Reference: Assistance from gemini
 ********************************************************************* */
-void Computer::help(Player* player, Stock gamestock, Round gameRound, int leftEnd, int rightEnd) {
+void Computer::help(Player* player, Move playerMove, Stock gamestock, Round gameRound, int leftEnd, int rightEnd) {
+
+
+
     //get all playable tiles
     std::vector<Player::PlayableOption> playableTiles = player->findPlayableTiles(player->getHand(), gameRound, leftEnd, rightEnd);
 
     //if there are no playable tiles
     if (playableTiles.empty()) {
         if (gamestock.getBoneyard().empty()) {
-            cout << "The boneyard is empty and there's no playable tiles. You must pass." << endl;
+
+            
+            cout << "The boneyard is empty and there's no playable tiles. You have to pass." << endl;
         }
         else {
-            cout << "No playable tiles. It's best to draw." << endl;
+            if (playerMove.draw)
+            {
+                cout << "There's nowhere to place your drawn tile. You have to pass" << endl;
+            }
+            else
+            {
+                cout << "No playable tiles. It's best to draw." << endl;
+            }
         }
         return;
     }
-
+    
 
     //default to left side for humans
     int bestIndex = -1;
     int bestScore = -1;
     char bestSide = 'L';
 
+    
+    if (playableTiles.size() == 1)
+    {
+        bestIndex = playableTiles[0].index;
+        bestSide = playableTiles[0].side;
+    }
+    else
+    {
+        for (const auto& option : playableTiles) {
+            string tile = player->getTileByIndex(option.index);
+            pair<int, int> pips = parseTile(tile);
 
-    for (const auto& option : playableTiles) {
-        string tile = player->getHand().getTileByIndex(option.index);
-        pair<int, int> pips = parseTile(tile);
+            //use an invisible score to find best rated tile
+            int currentScore = scoreTile(pips.first, pips.second, leftEnd, rightEnd, option.side, player->returnID());
 
-        //use an invisible score to find best rated tile
-        int currentScore = scoreTile(pips.first, pips.second, leftEnd, rightEnd, option.side, player->returnID());
-
-        if (currentScore > bestScore) {
-            bestScore = currentScore;
-            bestIndex = option.index;
-            bestSide = option.side;
+            if (currentScore > bestScore) {
+                bestScore = currentScore;
+                bestIndex = option.index;
+                bestSide = option.side;
+            }
         }
     }
+    
+
 
     //there will be no playable tiles
     if (bestIndex != -1) {
         string recommendedTile = player->getHand().getTileByIndex(bestIndex);
-        cout << "Recommendation: " << recommendedTile << " on side " << bestSide << endl;
+        cout << "Recommendation: " << recommendedTile << " on the " << ((bestSide == 'L') ? "left" : "right") << " side" << endl;
 
         const int COMPUTER_INDEX = 1;
         if (bestSide == 'R' && gameRound.isPassed(COMPUTER_INDEX)) {
-            cout << "The opponent has passed! Place a tile on their side R to disrupt their chain!." << endl;
+            cout << "Your opponent has passed! Place a tile on their side R to disrupt their chain!." << endl;
         }
 
         if (recommendedTile[0] == recommendedTile[2]) {
             cout << "Doubles can be placed on both sides as long as they match." << endl;
         }
         else {
-            cout << "High pip values should be played as soon as possible to reduce the amount of points your opponent receives." << endl;
+
+            if (playableTiles.size() == 1)
+            {
+                cout << recommendedTile << " is the only tile you can play now." << endl;
+            }
+            else
+            {
+                int totalPipValue = (recommendedTile[0] - '0') + (recommendedTile[2] - '0');
+                cout << "The pips on this tile, " << recommendedTile[0] << " and " << recommendedTile[2] << ", add up to " << totalPipValue << ", which is a higher sum value than your other tiles" << endl;
+
+                cout << "High pip values should be played as soon as possible to reduce the amount of points your opponent receives." << endl;
+
+            }
         }
+
+        //drawing cases
     }
     
 }
@@ -233,20 +269,48 @@ Algorithm:
    2) Draw if no moves are possible.
    3) Score all available moves and execute the best one.
 ********************************************************************* */
-Move Computer::takeTurn(Stock gameStock, Round gameRound, int leftEnd, int rightEnd) {
-    Move move{};
+Player::Move Computer::takeTurn(Stock &gameStock, Round gameRound, int leftEnd, int rightEnd) {
+    Player::Move move;
+    move.draw = false;
+    move.passed = false;
+    move.help = false;
+    move.chosenTile = "";
+    move.side = ' ';
+    move.hasPlayableTiles = false;
+
     std::vector<Player::PlayableOption> playableTiles = findPlayableTiles(hand, gameRound, leftEnd, rightEnd);
 
+
     if (playableTiles.empty()) {
+
+        //if can't draw
         if (gameStock.getBoneyard().empty()) {
             move.draw = false;
             move.passed = true;
+            return move;
         }
+        //if can draw
         else {
+            
+            //commit draw first
             move.draw = true;
+            hand.addTile(gameStock.drawTile());
+
+            cout << returnID() << " drew " << hand.getTileByIndex(hand.getHandTiles().size() - 1) << endl;
+
+            //if drawn tile can't be played
+            if ((playableTiles = findPlayableTiles(hand, gameRound, leftEnd, rightEnd)).empty())
+            {
+                cout << "No tiles can be played, will have to pass" << endl;
+                move.passed = true;
+                return move;
+            }
+
         }
-        return move;
     }
+
+    
+
 
     //default to left side for humans
     int bestIndex = -1;
@@ -265,8 +329,15 @@ Move Computer::takeTurn(Stock gameStock, Round gameRound, int leftEnd, int right
         }
     }
 
-    move.tileIndex = bestIndex;
+
+    //vector<string>::iterator it;
+    vector<string> tiles = hand.getHandTiles(); //HAVING ISSUES
+    /*for (int i = 0; i < hand.getHandTiles().size(); i++)
+    {
+        cout << "TILES: " << hand.getHandTiles()[i] << endl;
+    } */
+    move.chosenTile = hand.getTileByIndex(bestIndex);
     move.side = bestSide;
-    move.draw = false;
+    //move.draw = false;
     return move;
 }

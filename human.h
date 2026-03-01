@@ -77,7 +77,7 @@ public:
                 rightEnd: int, layout's current right end.
     Return Value: Move structure containing the validated decision.
     ********************************************************************* */
-    Move takeTurn(Stock gameStock, Round gameRound, int leftEnd, int rightEnd) override;
+    Player::Move takeTurn(Stock &gameStock, Round gameRound, int leftEnd, int rightEnd) override;
 
     /* *********************************************************************
     Function Name: findPlayableTiles
