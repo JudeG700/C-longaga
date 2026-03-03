@@ -12,19 +12,53 @@ Game::Game(): human(humanHand), computer(computerHand)
 
 void Game::startGame(int option)
 {
-
-	if(option == 2)
+	if (option == 1)
 	{
 
-		showLoadMenu();
+		int tournamentScore = 0;
+		do
+		{
+			cout << "Enter the tournament score (between 50 & 250): " << endl;
+			cin >> tournamentScore;
+
+			//made with google gemini
+			if (cin.fail()) {
+
+
+				cin.clear();
+				cin.ignore(1000, '\n');
+				cout << "Invalid input!" << endl;
+				continue;
+			}
+
+		} while (tournamentScore < 50 || tournamentScore > 250);
+
+
+		//set the required score for the tournament
+		gameTournament.setTournScore(tournamentScore);
+		roundInitialized = false; //why here???
+		runTournament(gameTournament);
+
+
+	}
+	else if(option == 2)
+	{
+
 		cout << "resuming loaded game " << endl;
 		string loadName = "";
-		if ((loadName = showLoadMenu()) == " ")
+		loadName = showLoadMenu();
+
+		if (loadName == " ")
 		{
 			cout << "Goodbye  " << endl;
 			exit(0);
 		}
 		newLoadGameState(loadName);
+
+		if (roundInitialized == true)
+		{
+			runRound(gameRound, layout, gameTournament, players, gameView);
+		}
 	}
 }
 
@@ -777,6 +811,8 @@ bool Game::applyMove(
 
 
 	//SECTION BUILT USING GEMINI 
+
+	cout << "PLAYER: !!!!!!!" << player->returnID() << endl;
 
 	//this is just used to document the moves that the computer makes
 	if (player->returnID() == "Computer")
