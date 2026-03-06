@@ -87,6 +87,7 @@ int Computer::scoreTile(int a, int b, int leftEnd, int rightEnd, char pickedSide
             score += 10;
         }
         //Encourage the player to play doubles on their opponent's side
+        //this condition is specifically for when the player asks for help and the computer calculates the best tile for them
         else if (pickedSide == 'R' && player == "Human") {
             score += 10;
         }
@@ -128,25 +129,36 @@ Reference: Assistance from gemini
 ********************************************************************* */
 std::vector<Player::PlayableOption> Computer::findPlayableTiles(Hand hand, Round& gameRound, int leftEnd, int rightEnd) {
     
+    //an array to pick the tile that's playable and what side it's playable on
     std::vector<Player::PlayableOption> playable;
     std::vector<std::string> tiles = hand.getHandTiles();
 
-    const int HUMAN_PLAYER_INDEX = 0;
-    bool humanPassed = gameRound.isPassed(HUMAN_PLAYER_INDEX);
+    
+    const int HUMAN_INDEX = 0;
 
+    //if the human player has passed
+    bool humanPassed = gameRound.isPassed(HUMAN_INDEX);
+
+    //iterate through each tile
     for (int i = 0; i < (int)tiles.size(); i++) {
+        
+        //see if it is double
         std::pair<int, int> p = parseTile(tiles[i]);
         bool isDoubleTile = isDouble(p.first, p.second);
 
+        //see if it matches left or right
         bool matchesLeft = (p.first == leftEnd || p.second == leftEnd);
         bool matchesRight = (p.first == rightEnd || p.second == rightEnd);
 
-        // Computer side (Right)
+
+        // If it matches the last pip on the computer's side
         if (matchesRight) {
             playable.push_back({ i, 'R' });
         }
 
-        // Opponent side (Left) - requires double or human pass
+        // If it matches the last pip on the human's side, and if they passed or the played tile is a double
+        //FYI: There is a chance if the tile is playable on both sides, it will be pushed in again
+        //this is so that the scoring system can tell whether to play left or right
         if (matchesLeft && (isDoubleTile || humanPassed)) {
             playable.push_back({ i, 'L' });
         }
@@ -278,9 +290,11 @@ Player::Move Computer::takeTurn(Stock &gameStock, Round gameRound, int leftEnd, 
     move.side = ' ';
     move.hasPlayableTiles = false;
 
+
+    //find side and index of tiles that are playable
     std::vector<Player::PlayableOption> playableTiles = findPlayableTiles(hand, gameRound, leftEnd, rightEnd);
 
-
+    //if there are no tiles that can be played
     if (playableTiles.empty()) {
 
         //if can't draw
@@ -306,38 +320,40 @@ Player::Move Computer::takeTurn(Stock &gameStock, Round gameRound, int leftEnd, 
                 return move;
             }
 
+            //if it can be played, it will be taken to the tile scoring system 
         }
     }
 
     
 
 
-    //default to left side for humans
+    //default to right side for computers
     int bestIndex = -1;
     int bestScore = -1;
     char bestSide = 'R';
 
+    //iterates through all the playable tiles
     for (const auto& option : playableTiles) {
+        //get the actual tile
         string tile = hand.getTileByIndex(option.index);
         pair<int, int> p = parseTile(tile);
+
+        //use the tile to get the score
         int currentScore = scoreTile(p.first, p.second, leftEnd, rightEnd, option.side, returnID());
 
+        //algorithm to find the best tile based on score
         if (currentScore > bestScore) {
             bestScore = currentScore;
             bestIndex = option.index;
             bestSide = option.side;
         }
     }
+     
 
-
-    //vector<string>::iterator it;
-    vector<string> tiles = hand.getHandTiles(); //HAVING ISSUES
-    /*for (int i = 0; i < hand.getHandTiles().size(); i++)
-    {
-        cout << "TILES: " << hand.getHandTiles()[i] << endl;
-    } */
+    vector<string> tiles = hand.getHandTiles(); 
+    
+    //obtain the best tile
     move.chosenTile = hand.getTileByIndex(bestIndex);
     move.side = bestSide;
-    //move.draw = false;
     return move;
 }

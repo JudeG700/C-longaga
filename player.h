@@ -7,6 +7,7 @@
 #include <iostream>
 #include <set>
 #include <string>
+using namespace std;
 
 // Forward declaration to handle the circular dependency with Round
 class Round;
@@ -107,9 +108,12 @@ public:
 
     std::string getTileByIndex(int index) const;
 
-    int getIndexByTile(std::string tile) const;
+    int getIndexByTile(string tile) const;
     
     // --- 5. Mutators ---
+
+
+    bool hasTile(string targetTile);
 
     /* *********************************************************************
     Function Name: setTiles
@@ -119,7 +123,7 @@ public:
     Algorithm:
                 1) Take the passed vector and update internal hand tiles.
     ********************************************************************* */
-    void setTiles(std::vector<std::string> deal);
+    void setTiles(std::vector<string> deal);
 
     /* *********************************************************************
     Function Name: addPoints
@@ -175,11 +179,12 @@ public:
     ********************************************************************* */
     virtual std::vector<PlayableOption> findPlayableTiles(Hand hand, Round& gameRound, int leftEnd, int rightEnd) = 0;
 
+
 protected:
     // Base class members accessible by Human and Computer
     Hand hand;
     int score;
-    std::string ID;
+    string ID;
 
 private:
     // (Private members go here if they are not meant for derived classes)

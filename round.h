@@ -7,7 +7,7 @@
 #include "player.h"
 
 // Forward declaration for circular dependency
-class Round;
+//class Round;
 
 /* *********************************************************************
 Class Name: Round
@@ -26,11 +26,12 @@ public:
     // --- 4. Selectors ---
     bool isRoundOver() const;
     int getRoundNum() const;
-    //std::string getEngine() const;
+    std::string getEngine() const;
     std::string getRequiredEngine() const;
     int getCurrentPlayer() const;
     int getNextPlayer() const;
     bool bothPassed() const;
+
     bool isPassed(int playerIndex) const;
     std::string yesNo(bool stateValue) const;
 

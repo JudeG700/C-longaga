@@ -3,6 +3,7 @@
 #include <iostream>
 #include <deque>
 #include <string>
+using namespace std;
 
 /* *********************************************************************
 Class Name: Layout
@@ -48,6 +49,9 @@ public:
     ********************************************************************* */
     int returnLeft() const;
 
+    string returnLeftTile() const;
+
+    string returnRightTile() const;
     /* *********************************************************************
     Function Name: returnRight
     Purpose: Returns the pip value available on the right-most tile.

@@ -107,7 +107,7 @@ public:
     Return Value: std::vector<int>, indices of playable tiles.
     ********************************************************************* */
     //std::vector<int> findPlayableTiles(Hand hand, Round& gameRound, int leftEnd, int rightEnd) override;
-    std::vector<Player::PlayableOption> findPlayableTiles(Hand hand, Round& gameRound, int leftEnd, int rightEnd);
+    std::vector<Player::PlayableOption> findPlayableTiles(Hand hand, Round& gameRound, int leftEnd, int rightEnd) override;
 
     /* *********************************************************************
     Function Name: scoreTile

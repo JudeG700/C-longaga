@@ -11,13 +11,26 @@
 //
 
 
-/*
--hasPassed not working
--draw feature not working either
--really understand all longaga rules
-*/
+#include <iostream>
+#include <vector>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <stdio.h>
+#include <Windows.h>
+#include "layout.h"
+#include "layoutView.h"
+#include "stock.h"
+#include "hand.h"
+#include "round.h"
+#include "player.h"
+#include "human.h"
+#include "computer.h"
+#include "Tournament.h"
 
-#include "header.h"
+using namespace std;
+
+
 /* *********************************************************************
 Function Name: menu
 Purpose: Displays the game's entry point and validates the user's choice
@@ -147,8 +160,12 @@ Algorithm:
 			   flipped target; otherwise, return false after the loop.
 Reference: none
 ********************************************************************* */
+
 bool checkHandForTile(Player* p, string target) {
-	if (p == nullptr) return false;
+	if (p == nullptr)
+	{
+		return false;
+	}
 
 	// Get the hand from the player
 	vector<string> handTiles = p->getHandTiles();
@@ -169,6 +186,8 @@ bool checkHandForTile(Player* p, string target) {
 	}
 	return false;
 }
+ 
+
 
 /* *********************************************************************
 Function Name: saveGameState
@@ -189,8 +208,12 @@ void saveGameState(string filename, Hand humanHand, Hand computerHand, Stock& ga
 
 	std::ofstream outFile(filename);
 
-	if (!outFile) return;
+	if (!outFile)
+	{
+		return;
+	}
 
+	//using \n for speedier writing
 	outFile << "Tournament Score: " << tournament.getTournScore() << "\n";
 	outFile << "Round No.: " << currentRound.getRoundNum() << "\n\n";
 
@@ -263,12 +286,15 @@ Algorithm:
 			7) Close the file stream.
 Reference: Logic for string parsing and stringstream usage assisted by Gemini.
 ********************************************************************* */
-void loadGameState (string filename, Player* human, Player* computer, Stock& gameStock, Tournament& tournament, Layout& layout, Round& currentRound) {
+bool loadGameState (string filename, Player* human, Player* computer, Stock& gameStock, Tournament& tournament, Layout& layout, Round& currentRound) {
 	
+
+	bool isInitialized = 1;
+
 	bool passVal = 0;
 
 	ifstream is(filename);
-	if (!is) return;
+	if (!is) return false;
 
 	string line;
 	while (getline(is, line)) {
@@ -279,15 +305,19 @@ void loadGameState (string filename, Player* human, Player* computer, Stock& gam
 				string value = line.substr(colonPos + 1);
 				tournament.setTournScore(stoi(value));
 			}
+			//should be error without tournament score
+			
 			//			tournament.setTournScore(std::stoi(line.substr(line.find(":") + 1)));
 		}
 		// 2. Round Number
 		else if (line.find("Round No.:") != std::string::npos) {
 			size_t colonPos = line.find(":");
 			if (colonPos != string::npos) {
-				string value = line.substr(colonPos + 1);
+				string value = line.substr(colonPos + 1); //+1 to find data item after it
+				//if can't find value should throw error
 				currentRound.setRoundNum(stoi(value));
 			}
+			
 			//currentRound.setRoundNum(std::stoi(line.substr(line.find(":") + 1)));
 		}
 		// 3. Computer player's hand
@@ -305,9 +335,11 @@ void loadGameState (string filename, Player* human, Player* computer, Stock& gam
 					while (ss >> tempTile)
 						loadedTiles.push_back(tempTile);
 
+					//even if they have no tiles, it's still acceptable
 					computer->setTiles(loadedTiles);
 				}
 			}
+			
 
 			if (getline(is, line) && line.find("Score:") != string::npos) {
 
@@ -322,30 +354,6 @@ void loadGameState (string filename, Player* human, Player* computer, Stock& gam
 		}
 		// 4. Human Hand
 		else if (line.find("Human:") != std::string::npos) {
-
-			/*
-			std::getline(is, line); // Move to "Hand:" line
-			std::string tilesStr = line.substr(line.find(":") + 2);
-
-			stringstream ss(tilesStr);
-			string tempTile;
-			vector<string> loadedTiles;
-
-			while (ss >> tempTile) { 
-				loadedTiles.push_back(tempTile);
-			}
-
-			//set the human player's score
-			humanHand.setTiles(loadedTiles);
-
-			std::getline(is, line);
-			if (line.find("Score:"))
-			{
-				int scoreVal = std::stoi(line.substr(line.find(":") + 2));
-				tournament.setHumanScore(scoreVal);
-			}
-			// Same logic for humanHand
-			*/
 
 
 			if (std::getline(is, line) && line.find("Hand:") != std::string::npos) {
@@ -382,28 +390,40 @@ void loadGameState (string filename, Player* human, Player* computer, Stock& gam
 
 			if (getline(is, line) && line.find("L") != string::npos) {
 				// Find the text between L and R
-				size_t start = line.find("L") + 2;
+				size_t start = line.find("L") + 1;
 				//size_t start = line.find("L");
 				size_t end = line.find("R");
 				if (start < end && end != string::npos) {
 					string tilesStr = line.substr(start, end - start);
+					//parse
 					stringstream ss(tilesStr);
 					string temp;
-					while (ss >> temp) layout.addRight(temp);
+
+					//add
+					while (ss >> temp)
+					{
+						layout.addRight(temp);
+					}
 				}
 			}
 
 		
 		}
-		//load boneyard
+		//if boneyard keyword is found
 		else if (line.find("Boneyard:") != string::npos)
 		{
+			vector<string> boneyardTiles;
+			//we will enter and see what is there
 			if (std::getline(is, line) && !line.empty()) {
 				// If there's no colon on this line, don't use find(":")!
 				stringstream ss(line);
 				string t;
-				vector<string> boneyardTiles;
 				while (ss >> t) boneyardTiles.push_back(t);
+				gameStock.setBoneyard(boneyardTiles);
+			}
+			//set to empty if uninitialized
+			else
+			{
 				gameStock.setBoneyard(boneyardTiles);
 			}
 		}
@@ -459,8 +479,20 @@ void loadGameState (string filename, Player* human, Player* computer, Stock& gam
 
 		
 		
+
 	}
 	is.close();
+
+	//we start a new round here
+	//if the layout is empty but boneyard isn't we assume a round as started, and we go find the engine
+	//if the boneyard is empty but layout isn't, we assume that we are in the middle of a round where the boneyard is empty
+	if (gameStock.getBoneyard().empty() && layout.isEmpty())
+	{
+		isInitialized = false;
+	}
+
+
+	return isInitialized;
 }
 
 
@@ -548,8 +580,6 @@ bool applyMove(
 
 	
 
-	
-
 	//if they decide to pass, the next player takes their turn
 	if (move.passed) {
 
@@ -579,21 +609,21 @@ bool applyMove(
 	//double tile
 	bool isDouble = (a == b);
 
-	//if player chose to play left side
+	//if the player chose to play their tile on the left side
 	if (move.side == 'L') {
 
-		
+		//if tile is a double
 		if (isDouble)
 		{
 			layout.addLeft(move.chosenTile);
 		}
-		//if b matches
+		//if right side matches left side of layout
 		else if (b == leftEnd) 
 		{
 			layout.addLeft(move.chosenTile);
 
 		}
-		//if side a matches we flip
+		//if the left side matches the left side of the layout, we flip
 		else if (a == leftEnd) {
 			string flipped = ""; flipped += move.chosenTile[2]; flipped += '-'; flipped += move.chosenTile[0];
 			cout << player->returnID() << " flipped " << move.chosenTile << " left to " << flipped << endl;
@@ -607,17 +637,21 @@ bool applyMove(
 
 		 
 	}
+	//if the player chose to play their tile on the right side
 	else if (move.side == 'R') {
 
+		//if tile is a double
 		if (isDouble)
 		{
 			layout.addRight(move.chosenTile);
 		}
+		//if left side matches right side of layout
 		else if (a == rightEnd)
 		{
 			layout.addRight(move.chosenTile);
 
 		}
+		//if the right side matches the right side of the layout, we flip
 		else if (b == rightEnd) {
 			string flipped = ""; flipped += move.chosenTile[2]; flipped += '-'; flipped += move.chosenTile[0];
 			cout << player->returnID() << " flipped " << move.chosenTile << " right to " << flipped << endl;
@@ -637,11 +671,44 @@ bool applyMove(
 	//this is just used to document the moves that the computer makes
 	if (player->returnID() == "Computer")
 	{
-		
-		string sideName = (move.side == 'L') ? "left" : "right";
+		//the name of the side to be picked
+		string sideName;
 
-		string referencePoint = (layout.getChain().size() <= 2) ? "engine" : "layout";
+		// the proximity of the computer
+		string referencePoint = "";
 		
+		if (player->returnID() == "Computer")
+		{
+			// the name of the side to be picked
+			sideName = (move.side == 'L') ? "left" : "right";
+
+			cout << "GAMEROUND ENGINE: " << endl;
+			cout << gameRound.getEngine() << endl;
+
+			if (sideName == "left")
+			{
+				if (layout.returnLeftTile() == gameRound.getEngine())
+				{
+					referencePoint = "engine";  
+				}
+				else
+				{
+					referencePoint = "layout";
+				}
+			}
+			else if (sideName == "right")
+			{
+				if (layout.returnRightTile() == gameRound.getEngine())
+				{
+					referencePoint = "engine";  
+				}
+				else
+				{
+					referencePoint = "layout";
+				}
+			}
+		}
+
 		if (move.passed) {
 			cout << player->returnID() << " passed." << endl;
 		}
@@ -661,7 +728,6 @@ bool applyMove(
 				cout << "Continuing to hold tiles with lots of pips would soften the blow if I were to lose; the player gets less points" << endl;
 			}
 		}
-		Sleep(1000);
 	}
 	
 	cout << endl;
@@ -704,11 +770,13 @@ void addTotalPoints(Player& winner, Player& loser, Tournament& gameTournament) {
 		total += a + b;
 	}
 
+	//if human wins the round
 	if (winner.returnID() == "Human")
 	{
 		std::cout << "Human wins the round! +" << total << " points\n";
 		gameTournament.addPlayerScore(total);
 	}
+	//if computer wins the round
 	else if(winner.returnID() == "Computer")
 	{
 		std::cout << "Computer wins the round! +" << total << " points\n";
@@ -740,7 +808,8 @@ Reference: none
 ********************************************************************* */
 void tiePoints(Player* Human, Player* Computer, Tournament& gameTournament)
 {
-
+	//sum of points for human
+	//add pips from each tile
 	int sumHuman = 0;
 	for (const auto& tile : Human->getHandTiles()) {
 		int a = tile[0] - '0';
@@ -748,20 +817,24 @@ void tiePoints(Player* Human, Player* Computer, Tournament& gameTournament)
 		sumHuman += a + b;
 	}
 
+	//sum of points for computer
+	//add pips from each tile
 	int sumComputer = 0;
 	for (const auto& tile : Computer->getHandTiles()) {
 		int a = tile[0] - '0';
 		int b = tile[2] - '0';
 		sumComputer += a + b;
 	}
-
+	
+	//if human player's total pips are greater than computer's
 	if (sumHuman < sumComputer) {
 		gameTournament.addPlayerScore(sumComputer);
-		std::cout << "Human wins the tied round! +" << sumComputer << " points\n";
+		std::cout << "Computer wins the tied round! +" << sumComputer << " points\n";
 	}
+	//if computer player's total pips are greater than human's
 	else if (sumComputer < sumHuman) {
 		gameTournament.addComputerScore(sumHuman);
-		std::cout << "Computer wins the tied round! +" << sumHuman << " points\n";
+		std::cout << "Human wins the tied round! +" << sumHuman << " points\n";
 	}
 	else {
 		std::cout << "Tied round is a draw. No points awarded.\n";
@@ -794,21 +867,26 @@ Reference: none
 string obtainEngine(Round gameRound, Player* players[], Stock& gameStock)
 {
 	string engine = "";
+
+	//see what the engine should be based on round(6-6 for round 1, 5-5 for round 2)
 	gameRound.determineRequiredEngine();
 
+	//we can find the engine now that we know which one we need
 	engine = gameRound.determineEngine(players[0]->getHandTiles());
 	if (engine == "")
 	{
+		//if human doesn't have the engine, they look in computer's tile
 		cout << "Human doesn't have the engine " << endl;
 		engine = gameRound.determineEngine(players[1]->getHandTiles());
 
-
+		//if computer has the engine
 		if (engine != "")
 		{
 			cout << "Computer has the engine" << endl;
 			cout << "Computer takes first turn" << endl;
 
 		}
+		//if computer doesn't have the engine
 		else
 		{
 			cout << "Computer doesn't have engine either" << endl;
@@ -889,10 +967,16 @@ Reference: none
 ********************************************************************* */
 void firstTurn(string engine, Layout& layout, Player* players[], Round& gameRound)
 {
-
+	//play tile
 	layout.addLeft(engine);
+
+
+	//placedTile[gameRound.getCurrentPlayer()] = 1;
+
+	//whoever has the engine takes the first turn
+
 	int engineOwner = -1;
-	if (checkHandForTile(players[0], engine)) {
+	if (players[0]->hasTile(engine)) {
 		engineOwner = 0; // Human
 		gameRound.setCurrentPlayer(1); // Set next turn to Computer
 	}
@@ -900,13 +984,23 @@ void firstTurn(string engine, Layout& layout, Player* players[], Round& gameRoun
 		engineOwner = 1; // Computer
 		gameRound.setCurrentPlayer(0); // Set next turn to Human
 	}
+	/*if (checkHandForTile(players[0], engine)) {
+		engineOwner = 0; // Human
+		gameRound.setCurrentPlayer(1); // Set next turn to Computer
+	}
+	else {
+		engineOwner = 1; // Computer
+		gameRound.setCurrentPlayer(0); // Set next turn to Human
+	} */
 
-	// 3. NOW REMOVE it from the owner's hand
+	
+	//remove whatever tile is in player's hand
 	vector<string> hand = players[engineOwner]->getHandTiles();
 	for (int i = 0; i < hand.size(); i++) {
 		// Check both orientations just in case
 		string flipped = ""; flipped += engine[2]; flipped += '-'; flipped += engine[0];
 		if (hand[i] == engine || hand[i] == flipped) {
+			//play tile
 			players[engineOwner]->removeTile(i);
 			break;
 		}
@@ -919,8 +1013,6 @@ int main()
 	
 	//move object used for documenting moves
 	Player::Move move;
-
-
 
 	//hands
 	Hand humanHand;
@@ -955,73 +1047,89 @@ int main()
 	//Tournament
 	Tournament gameTournament;
 
-
+	//used to determine if it is a new round
 	bool roundInitialized = false;
 
-	//Sent to menu first
-	int option = menu();
 
-	//if starting a new game
-	if (option == 1)
+	
+	bool isValidChoice = 0;
+	while(!isValidChoice)
 	{
-		int tournamentScore = 0;
-		do
+		//Sent to menu first
+		int option = menu();
+
+
+		//if starting a new game
+		if (option == 1)
 		{
-			cout << "Enter the tournament score (between 50 & 250): " << endl;
-			cin >> tournamentScore;
+			int tournamentScore = 0;
+			const short MIN_TOURN_SCORE = 50;
+			const short MAX_TOURN_SCORE = 250;
 
-			//made with google gemini
-			if (cin.fail()) {
+			do
+			{
+				cout << "Enter the tournament score (between 50 & 250): " << endl;
+				cin >> tournamentScore;
+
+				//made with google gemini
+				if (cin.fail()) {
 
 
-				cin.clear();
-				cin.ignore(1000, '\n');
-				cout << "Invalid input!" << endl;
-				continue; 
+					cin.clear();
+					cin.ignore(1000, '\n');
+					cout << "Invalid input!" << endl;
+					continue;
+				}
+
+			} while (tournamentScore < MIN_TOURN_SCORE || tournamentScore > MAX_TOURN_SCORE);
+
+			isValidChoice = true;
+
+			//set the required score for the tournament
+			gameTournament.setTournScore(tournamentScore);
+		}
+		else if (option == 2)
+		{
+
+			//the name for the file
+			string loadName = "";
+			loadName = showLoadMenu();
+			
+			if(loadName != " ")
+			{
+				cout << "resuming loaded game " << endl;
+				roundInitialized = loadGameState(loadName, players[0], players[1], gameStock, gameTournament, layout, gameRound);
+				isValidChoice = true;
 			}
 
-		} while (tournamentScore < 50 || tournamentScore > 250);
-
-		
-		//set the required score for the tournament
-		gameTournament.setTournScore(tournamentScore);
-		roundInitialized = false; //why here???
-	}
-	else if (option == 2)
-	{
-		cout << "resuming loaded game " << endl;
-		string loadName = "";
-		if ((loadName = showLoadMenu()) == " ")
-		{
-			menu();
 		}
-		loadGameState(loadName, players[0], players[1], gameStock, gameTournament, layout, gameRound);
-		roundInitialized = true;
-
 	}
+	
+
+	string engine = "";
+
 	//Continues looping until the tournament score is reached
 	while (gameTournament.getPlayerScore() < gameTournament.getTournScore() && gameTournament.getComputerScore() < gameTournament.getTournScore())
 	{
+	
 
 		//if this hasn't come from a player loading a game
-		string engine = "";
 
+		//if it is a new round
 		if (!roundInitialized)
 		{
-			layout.clearChain();
-			gameStock.reset();        // however you reset stock
+			layout.clearChain();			
+			//gameStock.reset();       
 			gameStock.shuffle();
 
 			//deal tiles to each player's hands
 			players[0]->setTiles(gameStock.deal());
 			players[1]->setTiles(gameStock.deal());
 
-
-			//obtain engine
-
 		}
-
-
+		
+		//this behavior is for when the game is loaded but no round has started yet
+		//if the layout is empty they get the first turn
 		if (layout.isEmpty() && !gameRound.isRoundOver())
 		{
 			engine = obtainEngine(gameRound, players, gameStock);
@@ -1037,29 +1145,20 @@ int main()
 		cout << "Get ready for round " << gameRound.getRoundNum() << endl;
 		Sleep(2000);
 
-
-		//------------------------------
-		//store data in variables to save them
-		//humanHand = players[0]->getHand();
-		//computerHand = players[1]->getHand();
-
-		//if a round was won
-		/*if (gameWon)
-		{
-				
-			//saves it too a copy
-			initSave(humanHand, computerHand, gameStock, gameTournament, layout, gameRound);
-		} */
-		//------------------------------
-	
-
-		//determine if player placed a tile
-		bool placedTile[2] = { false, false };
-
+		
+		int non_draw_passes = 0;
 
 		//while current round isn't over
 		while (!gameRound.isRoundOver())
 		{
+
+			//if either hand is empty, the round ends and the winner is determined
+			if (players[0]->getHandTiles().empty() || players[1]->getHandTiles().empty())
+			{
+				//break statement for certain test cases
+				gameRound.roundOver();
+				break;
+			}
 
 			//get layout ends AFTER obtaining the engine
 			leftEnd = layout.returnLeft();
@@ -1103,17 +1202,7 @@ int main()
 			cout << "_______________________________________" << endl;
 			cout << endl;
 
-			//if both players take their turn, ensure to offer human player to save
-			/*if (placedTile[0] == 1 && placedTile[1] == 1)
-			{
-				humanHand = players[0]->getHand();
-				computerHand = players[1]->getHand();
-				cout << endl;
-				cout << "_______________________________________" << endl;
-				initSave(players[0]->getHand(), players[1]->getHand(), gameStock, gameTournament, layout, gameRound);
-				placedTile[0] = 0;
-				placedTile[1] = 0;
-			} */
+			
 
 			
 			cout << "Previous Player Passed: " << gameRound.yesNo(gameRound.isPassed(gameRound.getNextPlayer())) << endl;
@@ -1128,8 +1217,6 @@ int main()
 			//to ensure move function returns true
 			bool moveWasSuccessful = 0;
 
-			//move object to store move details from move.h
-			Player::Move move;
 
 
 			//do
@@ -1147,6 +1234,9 @@ int main()
 				return 1;
 			}
 
+			//move object to store move details from move.h
+			Player::Move move;
+
 			//get the move
 			move = players[gameRound.getCurrentPlayer()]->takeTurn(gameStock, gameRound, leftEnd, rightEnd);
 				
@@ -1161,13 +1251,24 @@ int main()
 
 			vector<string>boneyard = gameStock.getBoneyard();
 
+			const short MAX_CONSEC_PASSES = 2;
 			//if a player chose to pass
 			if (move.passed)
 			{
 				//they are now set to passed
 				gameRound.setPassed(gameRound.getCurrentPlayer());
+			
+				//the boneyard being empty wouldn't matter as there would have to be
+				if (!move.draw && boneyard.empty())
+				{
+					non_draw_passes++;
 
-
+				}
+				/*else
+				{
+					non_draw_passes = 0;
+				} */
+				/*
 				//if the opponent pass right before the player did, and the boneyard is empty, it's a tie
 				if (gameRound.bothPassed() && boneyard.empty()) //FIX!!!!!!!!
 				{
@@ -1176,11 +1277,22 @@ int main()
 					moveWasSuccessful = true;
 
 					break;
+				} */
+
+				if (non_draw_passes == MAX_CONSEC_PASSES)
+				{
+					cout << "Both players have passed. It's a tie" << endl;
+					gameRound.roundOver();
+
+					break;
 				}
 					
 			}
 			else 
 			{
+				//reset consecutive passes
+				non_draw_passes = 0;
+
 				//if the player passed on their previous turn
 				if (gameRound.isPassed(gameRound.getCurrentPlayer()))
 				{
@@ -1192,37 +1304,11 @@ int main()
 
 				
 				
-
-			//} while (!moveWasSuccessful);
-
-			//give time to process computer opponent's move (the only two players are human and computer)
-			if (gameRound.getCurrentPlayer() == 1)
-			{
-				Sleep(1000);
-			}
+			//humanHand = players[0]->getHand();
+			//computerHand = players[1]->getHand();
 
 
-			//player placed a tile
-			placedTile[gameRound.getCurrentPlayer()] = 1;
-
-			//if either hand is empty, the round ends and the winner is determined
-			if (players[0]->getHandTiles().empty() || players[1]->getHandTiles().empty())
-			{
-				gameRound.roundOver();
-			}
-			
-			
-			//if both players take their turn, ensure to offer human player to save
-			if (placedTile[0] == 1 && placedTile[1] == 1)
-			{
-				humanHand = players[0]->getHand();
-				computerHand = players[1]->getHand();
-				cout << endl;
-				cout << "_______________________________________" << endl;
-				initSave(players[0]->getHand(), players[1]->getHand(), gameStock, gameTournament, layout, gameRound);
-				placedTile[0] = 0;
-				placedTile[1] = 0;
-			} 
+			initSave(players[0]->getHand(), players[1]->getHand(), gameStock, gameTournament, layout, gameRound);
 
 			//let next player take their turn
 			gameRound.setCurrentPlayer(nextIdx);
@@ -1308,7 +1394,12 @@ int main()
 		cout << "__________________________________________" << endl;
 		Sleep(2000);
 		
-
+		//if a round was won
+		
+			//saves it too a copy
+		//initSave(humanHand, computerHand, gameStock, gameTournament, layout, gameRound);
+		
+		//------------------------------
 
 		//offer player to save when round ends
 		//gameWon = 1;

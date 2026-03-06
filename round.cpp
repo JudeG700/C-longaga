@@ -120,9 +120,9 @@ Parameters: None.
 Return Value: String representation of the engine tile.
 Reference: None.
 ********************************************************************* */
-/**string Round::getEngine() const {
+string Round::getEngine() const {
     return engine;
-} */
+} 
 
 /* *********************************************************************
 Function Name: getRequiredEngine
@@ -148,11 +148,15 @@ Algorithm:
 Reference: Assistance from chatgpt.
 ********************************************************************* */
 string Round::determineEngine(const vector<string>& playerHand) {
+
+    //find the required engine within the player's hand
     for (const auto& tile : playerHand) {
         if (tile == requiredEngine) {
-            return tile;
+            engine = tile;
+            return engine;
         }
     }
+    
     return "";
 }
 
@@ -167,6 +171,7 @@ Algorithm:
 Reference: None.
 ********************************************************************* */
 void Round::determineRequiredEngine() {
+    //engine will decrement every round from 6-6 to 5-5 before going back to 6-6 
     int index = (roundNum - 1) % requiredEngines.size();
     requiredEngine = requiredEngines[index];
 }

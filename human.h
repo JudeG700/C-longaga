@@ -67,7 +67,23 @@ public:
 
     // --- 6. Utility Functions ---
 
-    /* *********************************************************************
+    int getValidatedInt(int min, int max);
+    char getValidatedSide();
+    std::string getValidatedTileFromHand();
+
+    bool matchesLeft(const std::pair<int, int>& pips, int leftEnd) const;
+    bool matchesRight(const std::pair<int, int>& pips, int rightEnd) const;
+    bool canPlayRight(const std::pair<int, int>& pips,
+        int rightEnd,
+        Round& gameRound) const;
+
+    void handleDraw(Player::Move& move,
+        Stock& gameStock,
+        Round& gameRound,
+        int leftEnd,
+        int rightEnd);
+
+        /* *********************************************************************
     Function Name: takeTurn
     Purpose: Facilitates the human's turn via console input and validation.
     Parameters:
@@ -89,7 +105,7 @@ public:
                 rightEnd: int, current right end.
     Return Value: std::vector<int>, indices of playable tiles.
     ********************************************************************* */
-    std::vector<Player::PlayableOption> findPlayableTiles(Hand hand, Round& gameRound, int leftEnd, int rightEnd);
+    std::vector<Player::PlayableOption> findPlayableTiles(Hand hand, Round& gameRound, int leftEnd, int rightEnd) override;
 
     /* *********************************************************************
     Function Name: parseTile

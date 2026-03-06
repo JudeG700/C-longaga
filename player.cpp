@@ -116,6 +116,13 @@ void Player::removeTile(int integer)
     hand.removeTile(integer);
 }
 
+bool Player::hasTile(string targetTile)
+{
+    bool hasTile;
+    hasTile = hand.hasTile(targetTile);
+    return hasTile;
+}
+
 /* *********************************************************************
 Function Name: addTile
 Purpose: To append a single tile to the player's hand.
@@ -158,3 +165,4 @@ std::vector<std::string> Player::getHandTiles() const
 {
     return hand.getHandTiles();
 }
+

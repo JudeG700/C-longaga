@@ -31,6 +31,18 @@ int Layout::returnLeft() const
 }
 
 
+
+string Layout::returnLeftTile() const
+{
+    return dominoChain.front();
+}
+
+string Layout::returnRightTile() const
+{
+    return dominoChain.back();
+}
+
+
 /* *********************************************************************
 Function Name: returnLeft
 Purpose: To check if the domino chain is empty.
