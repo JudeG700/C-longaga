@@ -26,7 +26,7 @@
 #include "player.h"
 #include "human.h"
 #include "computer.h"
-#include "Tournament.h"
+#include "tournament.h"
 
 using namespace std;
 
@@ -1036,7 +1036,7 @@ int main()
 	int rightEnd;
 
 	//rounds
-	Round gameRound;
+	Round gameRound(players);
 
 	//stocks
 	Stock gameStock;
@@ -1045,13 +1045,13 @@ int main()
 	LayoutView gameView;
 
 	//Tournament
-	Tournament gameTournament;
+	Tournament gameTournament(players);
 
 	//used to determine if it is a new round
 	bool roundInitialized = false;
 
 
-	
+	/*
 	bool isValidChoice = 0;
 	while(!isValidChoice)
 	{
@@ -1103,308 +1103,10 @@ int main()
 			}
 
 		}
-	}
+	}*/
 	
 
-	string engine = "";
-
-	//Continues looping until the tournament score is reached
-	while (gameTournament.getPlayerScore() < gameTournament.getTournScore() && gameTournament.getComputerScore() < gameTournament.getTournScore())
-	{
-	
-
-		//if this hasn't come from a player loading a game
-
-		//if it is a new round
-		if (!roundInitialized)
-		{
-			layout.clearChain();			
-			//gameStock.reset();       
-			gameStock.shuffle();
-
-			//deal tiles to each player's hands
-			players[0]->setTiles(gameStock.deal());
-			players[1]->setTiles(gameStock.deal());
-
-		}
-		
-		//this behavior is for when the game is loaded but no round has started yet
-		//if the layout is empty they get the first turn
-		if (layout.isEmpty() && !gameRound.isRoundOver())
-		{
-			engine = obtainEngine(gameRound, players, gameStock);
-			firstTurn(engine, layout, players, gameRound);
-		}
-
-		//whoever has the engine first takes the first turn
-
-		roundInitialized = true;
-
-
-		cout << endl;
-		cout << "Get ready for round " << gameRound.getRoundNum() << endl;
-		Sleep(2000);
-
-		
-		int non_draw_passes = 0;
-
-		//while current round isn't over
-		while (!gameRound.isRoundOver())
-		{
-
-			//if either hand is empty, the round ends and the winner is determined
-			if (players[0]->getHandTiles().empty() || players[1]->getHandTiles().empty())
-			{
-				//break statement for certain test cases
-				roundOver = true;
-				gameRound.roundOver();
-				break;
-			}
-
-			//get layout ends AFTER obtaining the engine
-			leftEnd = layout.returnLeft();
-			rightEnd = layout.returnRight();
-
-
-			//current and next player's index (0 and 1)
-			int currIdx = gameRound.getCurrentPlayer();
-			int nextIdx = 1 - currIdx;
-			
-			//set next player
-			gameRound.setNextPlayer(nextIdx);
-
-			//UI layout
-			cout << "_______________________________________" << endl;
-			cout << "Tournament Score: " << gameTournament.getTournScore() << endl;
-			cout << "Round no.: " << gameRound.getRoundNum() << endl;
-			cout << endl;
-
-			cout << "Computer: " << endl;
-			cout << "	";
-			players[1]->getHand().displayHand();
-			cout << endl;
-			cout << "	" << "Score: " << gameTournament.getComputerScore() << endl;
-			cout << endl;
-
-			cout << "Human: " << endl;
-			cout << "	";
-			players[0]->getHand().displayHand();
-			cout << endl;
-			cout << "	" << "Score: " << gameTournament.getPlayerScore() << endl;
-			cout << endl;
-
-			cout << "Layout: " << endl;
-			cout << "	";
-			gameView.display(layout.getChain());
-			cout << endl;
-
-			cout << "Boneyard: " << endl;
-			gameStock.display();
-			cout << "_______________________________________" << endl;
-			cout << endl;
-
-			
-
-			
-			cout << "Previous Player Passed: " << gameRound.yesNo(gameRound.isPassed(gameRound.getNextPlayer())) << endl;
-			cout << endl;
-			/*
-			cout << "Next Player: " << players[nextIdx]->returnID() << endl;
-			*/
-
-
-			
-
-			//to ensure move function returns true
-			bool moveWasSuccessful = 0;
-
-
-
-			//do
-			//{
-				
-			//IMPLEMENTED BUG CHECK WITH CHATGPT
-			//error checking for players
-			if (players[0] == nullptr || players[1] == nullptr) {
-				cout << "Memory Error: Players not initialized!" << endl;
-				return 1;
-			}
-
-			if (gameRound.getCurrentPlayer() < 0 || gameRound.getCurrentPlayer() > 1) {
-				cout << "Memory Error: currentPlayer index out of bounds: " << gameRound.getCurrentPlayer() << endl;
-				return 1;
-			}
-
-			//move object to store move details from move.h
-			Player::Move move;
-
-			//get the move
-			move = players[gameRound.getCurrentPlayer()]->takeTurn(gameStock, gameRound, leftEnd, rightEnd);
-				
-
-			//apply the move to the layout
-			moveWasSuccessful = applyMove(players[gameRound.getCurrentPlayer()], layout, gameStock, gameRound, move);
-				
-
-			//update the ends
-//			leftEnd = layout.returnLeft();
-//			rightEnd = layout.returnRight();
-
-			vector<string>boneyard = gameStock.getBoneyard();
-
-			const short MAX_CONSEC_PASSES = 2;
-			//if a player chose to pass 
-			if (move.passed)
-			{
-				//they are now set to passed
-				gameRound.setPassed(gameRound.getCurrentPlayer());
-			
-				//the boneyard being empty wouldn't matter as there would have to be
-				if (!move.draw && boneyard.empty())
-				{
-					non_draw_passes++;
-
-				}
-				/*else
-				{
-					non_draw_passes = 0;
-				} */
-				/*
-				//if the opponent pass right before the player did, and the boneyard is empty, it's a tie
-				if (gameRound.bothPassed() && boneyard.empty()) //FIX!!!!!!!!
-				{
-					cout << "Both players have passed. It's a tie" << endl;
-					gameRound.roundOver();
-					moveWasSuccessful = true;
-
-					break;
-				} */
-
-				if (non_draw_passes == MAX_CONSEC_PASSES)
-				{
-					cout << "Both players have passed. It's a tie" << endl;
-					gameRound.roundOver();
-
-					break;
-				}
-					
-			}
-			else 
-			{
-				//reset consecutive passes
-				non_draw_passes = 0;
-
-				//if the player passed on their previous turn
-				if (gameRound.isPassed(gameRound.getCurrentPlayer()))
-				{
-					//un-set their pass status
-					cout << "CUR: " << gameRound.getCurrentPlayer() << endl;
-					gameRound.resetPass(gameRound.getCurrentPlayer());
-				}
-			}
-
-				
-				
-			//humanHand = players[0]->getHand();
-			//computerHand = players[1]->getHand();
-
-
-			initSave(players[0]->getHand(), players[1]->getHand(), gameStock, gameTournament, layout, gameRound);
-
-			//let next player take their turn
-			gameRound.setCurrentPlayer(nextIdx);
-
-		} 
-
-
-
-		//if there is a set winner
-		if (!gameRound.bothPassed())
-		{
-			//check which one emptied their hand
-			Player* winner = gameRound.checkWinner(players[0], players[1]);
-
-			
-  			if (winner != nullptr)
-			{
-				Player* loser;
-
-				cout << "winner: " << winner->returnID() << endl;
-
-				if (winner->returnID() == "Human")
-				{
-					loser = players[1];
-				}
-				else
-				{
-					loser = players[0];
-				}
-
-				//give the winning player their score
-				addTotalPoints(*winner, *loser, gameTournament);
-
-			}
-				//help from chatgpt when running bug check
-
-		}
-		//if nobody won and it's a tie
-		else if(gameRound.bothPassed())
-		{
-			//whoever has the least tiles wins the round
-			tiePoints(players[0], players[1], gameTournament);
-
-			//reset passes for next round
-			gameRound.resetPasses();
-
-
-		}
-		
-		//make the engine be the next engine
-		gameRound.incEIndex();
-
-		//increment round number
-		gameRound.nextRound();
-
-		//the required engine is the engine lower than the preceeding one
-		//gameRound.setRequiredEngine();
-		gameRound.determineRequiredEngine();
-
-		//clear chain
-		layout.clearChain();
-
-		//reset the game stock
-		gameStock.reset();
-
-		//empty both hands
-		players[0]->emptyHand();
-		players[1]->emptyHand();
-
-		//reset
-		roundInitialized = false;
-
-
-		cout << endl;
-
-		cout << "The round has ended " << endl;
-		Sleep(2000);
-
-		cout << "Points for each player so far: " << endl;
-		cout << "__________________________________________" << endl;
-		cout << "Human: " << gameTournament.getPlayerScore() << endl;
-		cout << "Computer: " << gameTournament.getComputerScore() << endl;
-		cout << "__________________________________________" << endl;
-		Sleep(2000);
-		
-		//if a round was won
-		
-			//saves it too a copy
-		//initSave(humanHand, computerHand, gameStock, gameTournament, layout, gameRound);
-		
-		//------------------------------
-
-		//offer player to save when round ends
-		//gameWon = 1;
-	}
+	gameTournament.play();
 
 
 	string winner = gameTournament.determineWinner();

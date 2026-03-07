@@ -22,7 +22,7 @@
 #include "player.h"
 #include "human.h"
 #include "computer.h"
-#include "Tournament.h"
+#include "tournament.h"
 
 using namespace std;
 
@@ -38,16 +38,33 @@ Algorithm:
    4) Reset all player pass statuses to false.
 Reference: re-modeled all functions and constructors with help of Gemini.
 ********************************************************************* */
+
 Round::Round() :
-    roundNum(1),
-    engineIndex(0),
-    currentPlayer(0),
-    nextPlayer(0),
-    roundOverFlag(false)
-    {
-    requiredEngines = { "6-6", "5-5", "4-4", "3-3", "2-2", "1-1", "0-0" };
-    passed.fill(false);
-    }
+	roundNum(1),
+	engineIndex(0),
+	currentPlayer(0),
+	nextPlayer(0),
+	roundOverFlag(true)
+{
+	requiredEngines = { "6-6", "5-5", "4-4", "3-3", "2-2", "1-1", "0-0" };
+	passed.fill(false);
+}
+
+
+Round::Round(Player* p[])
+{
+
+	players[0] = p[0];
+	players[1] = p[1];
+	roundNum = 1;
+	engineIndex = 0;
+	currentPlayer = 0;
+	nextPlayer = 0;
+	roundOverFlag = true;
+	requiredEngines = { "6-6", "5-5", "4-4", "3-3", "2-2", "1-1", "0-0" };
+	passed.fill(false);
+
+}
 
 /* *********************************************************************
 Function Name: isRoundOver
@@ -727,7 +744,7 @@ Algorithm:
 			5) Print the result of the tie-breaker to the console.
 Reference: none
 ********************************************************************* */
-void Round::tiePoints(Player* Human, Player* Computer, Tournament& gameTournament)
+void Round::tiePoints(Player* Human, Player* Computer)
 {
 	//sum of points for human
 	//add pips from each tile
@@ -886,7 +903,7 @@ Algorithm:
 			   the hand size reflects the play.
 Reference: none
 ********************************************************************* */
-void Round::firstTurn()
+void Round::firstTurn(string engine)
 {
 	//play tile
 	layout.addLeft(engine);
@@ -922,26 +939,129 @@ void Round::firstTurn()
 }
 
 
+void Round::setupNewGame()
+{
+	layout.clearChain();
+	gameStock.shuffle();
+
+	//deal tiles to each player's hands
+	players[0]->setTiles(gameStock.deal());
+	players[1]->setTiles(gameStock.deal());
+
+}
+
+void Round::showBoard(Tournament gameTournament)
+{
+	LayoutView gameView;
+
+	cout << "_______________________________________" << endl;
+	cout << "Round no.: " << getRoundNum() << endl;
+	cout << endl;
+
+	cout << "Computer: " << endl;
+	cout << "	";
+	players[1]->getHand().displayHand();
+	cout << endl;
+	cout << "	" << "Score: " << gameTournament.getComputerScore() << endl;
+	cout << endl;
+
+	cout << "Human: " << endl;
+	cout << "	";
+	players[0]->getHand().displayHand();
+	cout << endl;
+	cout << "	" << "Score: " << gameTournament.getPlayerScore() << endl;
+	cout << endl;
+
+	cout << "Layout: " << endl;
+	cout << "	";
+	gameView.display(layout.getChain());
+	cout << endl;
+
+	cout << "Boneyard: " << endl;
+	gameStock.display();
+	cout << "_______________________________________" << endl;
+	cout << endl;
+}
+
 void Round::play(Player* players[2])
 {
+	int non_draw_passes = 0;
+	string engine = "";
+
+	cout << "SS: " << isRoundOver() << endl;
+	if (layout.isEmpty() && isRoundOver())
+	{
+		engine = obtainEngine();
+		firstTurn(engine);
+	}
+
+
+
     while (!roundEnded)
     {
         Player::Move move;
 
-        move = players[currentPlayer]->takeTurn(stock, *this, layout.returnLeft(), layout.returnRight());
 
+		//make move
+        move = players[currentPlayer]->takeTurn(gameStock, *this, layout.returnLeft(), layout.returnRight());
         applyMove(players[currentPlayer], move);
 
+		//check to see if round ended
         if (players[0]->getHandTiles().empty() || players[1]->getHandTiles().empty())
         {
 			roundEnded = true;
         }
 
+		const short MAX_CONSEC_PASSES = 2;
+
+		//if a player chose to pass
+		if (move.passed)
+		{
+			//they are now set to passed
+			setPassed(getCurrentPlayer());
+
+			//the boneyard being empty wouldn't matter as there would have to be
+			if (!move.draw && gameStock.getBoneyard().empty())
+			{
+				non_draw_passes++;
+
+			}
+			
+
+			//if both players simultaneously passed
+			if (non_draw_passes == MAX_CONSEC_PASSES)
+			{
+				cout << "Both players have passed. It's a tie" << endl;
+				roundOver();
+
+				//break;
+			}
+
+		}
+		else
+		{
+			//reset consecutive passes
+			non_draw_passes = 0;
+
+			//if the player passed on their previous turn
+			if (isPassed(getCurrentPlayer()))
+			{
+				//un-set their pass status
+				//cout << "CUR: " << gameRound.getCurrentPlayer() << endl;
+				resetPass(getCurrentPlayer());
+			}
+		}
+
+
+		//initSave();
+
+		//polymorphic loop
         currentPlayer = 1 - currentPlayer;
     }
+
 }
 
-void Round::initialize(Player* players[2], Tournament& gameTournament)
+bool Round::initialize(Tournament& gameTournament)
 {
 	//used to determine if it is a new round
 	bool roundInitialized = false;
@@ -994,11 +1114,12 @@ void Round::initialize(Player* players[2], Tournament& gameTournament)
 			if (loadName != " ")
 			{
 				cout << "resuming loaded game " << endl;
-				roundInitialized = gameTournament.loadGameState(loadName, players[0], players[1], gameStock, gameTournament, layout);
+				roundInitialized = gameTournament.loadGameState(loadName, players[0], players[1], gameStock, gameTournament, layout, *this);
 				isValidChoice = true;
 			}
 
 		}
 	}
+	return roundInitialized;
 
 }

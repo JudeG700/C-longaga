@@ -12,7 +12,14 @@
 #include <iostream>
 #include <string>
 
-
+Tournament::Tournament(Player* p[2])
+{
+	players[0] = p[0];
+	players[1] = p[1];
+	humanScore = 0;
+	computerScore = 0;
+	targetScore = 0;
+}
 /* *********************************************************************
 Function Name: addPlayerScore
 Purpose: To update the human player's cumulative tournament total.
@@ -45,6 +52,18 @@ Reference: None.
 void Tournament::addComputerScore(int points)
 {
     computerScore += points;
+}
+
+void Tournament::addScore(int points, Player* player)
+{
+	if (player->returnID() == "Human")
+	{
+		humanScore += points;
+	}
+	else if(player->returnID() == "Computer")
+	{
+		computerScore += points;
+	}
 }
 
 /* *********************************************************************
@@ -140,13 +159,85 @@ void Tournament::setHumanScore(int newScore) {
 
 void Tournament::play()
 {
-    while (!tournamentOver())
+    while (humanScore != 200 || computerScore != 200)
     {
-        Round round;
+		Round currentRound(players);
 
-        round.play(players);
+		if (!currentRound.initialize(*this))
+		{
+			currentRound.setupNewGame();
+		}
 
-        //updateScores();
+		currentRound.play(players);
+		
+
+		if (currentRound.bothPassed())
+		{
+			currentRound.tiePoints(players[0], players[1]);
+		}
+		else
+		{
+			Player* winner = currentRound.checkWinner(players[0], players[1]);
+
+			if (winner != nullptr)
+			{
+				Player* loser;
+
+				cout << "winner: " << winner->returnID() << endl;
+
+				if (winner->returnID() == "Human")
+				{
+					loser = players[1];
+				}
+				else
+				{
+					loser = players[0];
+				}
+
+				//give the winning player their score
+				calculatePoints(*winner, *loser);
+
+			}
+		}
+		
+		//make the engine be the next engine
+		//gameRound.incEIndex();
+
+		//increment round number
+		//gameRound.nextRound();
+
+		//the required engine is the engine lower than the preceeding one
+		//gameRound.setRequiredEngine();
+		//gameRound.determineRequiredEngine();
+
+		//clear chain
+		//layout.clearChain();
+
+		//reset the game stock
+		//gameStock.reset();
+
+		//empty both hands
+		//players[0]->emptyHand();
+		//players[1]->emptyHand();
+
+		//reset
+		//roundInitialized = false;
+
+
+		cout << endl;
+
+		cout << "The round has ended " << endl;
+		Sleep(2000);
+
+		cout << "Points for each player so far: " << endl;
+		cout << "__________________________________________" << endl;
+		cout << "Human: " << getPlayerScore() << endl;
+		cout << "Computer: " << getComputerScore() << endl;
+		cout << "__________________________________________" << endl;
+		Sleep(2000);
+		//the round class will call the tournament class to update scores
+	 
+        //addScore();
     }
 }
 
@@ -166,7 +257,7 @@ Algorithm:
 			5) Terminate the program with exit(0) to fulfill "Save and Quit" requirement.
 Reference: Google gemini
 ********************************************************************* */
-void Tournament::saveGameState(string filename, Player* human, Player* computer, Stock& gameStock, Tournament& tournament, Layout& layout) {
+void Tournament::saveGameState(string filename, Player* human, Player* computer, Stock& gameStock, Tournament& tournament, Layout& layout, Round& currentRound) {
 
 	std::ofstream outFile(filename);
 
@@ -177,16 +268,16 @@ void Tournament::saveGameState(string filename, Player* human, Player* computer,
 
 	//using \n for speedier writing
 	outFile << "Tournament Score: " << tournament.getTournScore() << "\n";
-	outFile << "Round No.: " << gameRound.getRoundNum() << "\n\n";
+	outFile << "Round No.: " << currentRound.getRoundNum() << "\n\n";
 
 	outFile << "Computer:\n";
 	outFile << "   Hand: ";
-	for (auto const& tile : computer.getHand.getHandTiles()) outFile << tile << " ";
+	for (auto const& tile : computer->getHand().getHandTiles()) outFile << tile << " ";
 	outFile << "\n   Score: " << tournament.getComputerScore() << "\n\n";
 
 	outFile << "Human:\n";
 	outFile << "   Hand: ";
-	for (auto const& tile : humanHand.getHandTiles()) outFile << tile << " ";
+	for (auto const& tile : human->getHand().getHandTiles()) outFile << tile << " ";
 	outFile << "\n   Score: " << tournament.getPlayerScore() << "\n\n";
 
 	outFile << "Layout:\n";
@@ -248,7 +339,7 @@ Algorithm:
 			7) Close the file stream.
 Reference: Logic for string parsing and stringstream usage assisted by Gemini.
 ********************************************************************* */
-bool Tournament::loadGameState(string filename, Player* human, Player* computer, Stock& gameStock, Tournament& tournament, Layout& layout) {
+bool Tournament::loadGameState(string filename, Player* human, Player* computer, Stock& gameStock, Tournament& tournament, Layout& layout, Round& currentRound) {
 
 
 	bool isInitialized = 1;
@@ -265,7 +356,7 @@ bool Tournament::loadGameState(string filename, Player* human, Player* computer,
 			size_t colonPos = line.find(":");
 			if (colonPos != string::npos) {
 				string value = line.substr(colonPos + 1);
-				tournament.setTournScore(stoi(value));
+				setTournScore(stoi(value));
 			}
 			//should be error without tournament score
 
@@ -308,7 +399,7 @@ bool Tournament::loadGameState(string filename, Player* human, Player* computer,
 				size_t colonPos = line.find(":");
 				if (colonPos != std::string::npos) {
 					std::string value = line.substr(colonPos + 1);
-					tournament.setComputerScore(std::stoi(value));
+					setComputerScore(std::stoi(value));
 				}
 			}
 
@@ -341,7 +432,7 @@ bool Tournament::loadGameState(string filename, Player* human, Player* computer,
 				size_t colonPos = line.find(":");
 				if (colonPos != std::string::npos) {
 					std::string value = line.substr(colonPos + 1);
-					tournament.setHumanScore(std::stoi(value));
+					setHumanScore(std::stoi(value));
 				}
 			}
 
@@ -462,7 +553,7 @@ bool Tournament::loadGameState(string filename, Player* human, Player* computer,
  * @brief Prompt-driven wrapper for saveGameState.
  * Allows the user to save and exit the application safely after each player takes a turn and after a round is over
  */
-void Tournament::initSave(Hand humanHand, Hand computerHand, Stock& gameStock, Tournament& tournament, Layout& layout, Round& currentRound)
+void Tournament::initSave(Player* Human, Player* Computer, Stock& gameStock, Tournament& tournament, Layout& layout, Round& currentRound)
 {
 	int inp;
 	do
@@ -508,7 +599,7 @@ void Tournament::initSave(Hand humanHand, Hand computerHand, Stock& gameStock, T
 				cout << "Error: File must end in .txt" << endl;
 			}
 		} while (!isValidFileName);
-		saveGameState(fileName, humanHand, computerHand, gameStock, tournament, layout, currentRound);
+		saveGameState(fileName, players[0], players[1], gameStock, tournament, layout, currentRound);
 	}
 	else
 	{

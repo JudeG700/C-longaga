@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include <iostream>
+#include <array>
 #include <vector>
 #include <string>
 #include <fstream>
@@ -15,13 +16,13 @@
 #include "player.h"
 #include "human.h"
 #include "computer.h"
-#include "Tournament.h"
+//#include "Tournament.h"
 
 
 using namespace std;
 
 // Forward declaration for circular dependency
-//class Round;
+class Tournament;
 
 /* *********************************************************************
 Class Name: Round
@@ -33,6 +34,8 @@ class Round {
 public:
     // --- 2. Constructors ---
     Round();
+
+    Round(Player* p[]);
 
     // --- 3. Destructor ---
     virtual ~Round() {}
@@ -67,13 +70,13 @@ public:
 
 
     //-------------------------------------------
-    void initialize(Player* players[2], Tournament& tournament);
+    bool initialize(Tournament& tournament);
 
     void play(Player* players[2]);
 
     //Player* determineWinner(Player* players[2]);
 
-    void firstTurn();
+    void firstTurn(string engine);
     string obtainEngine();
     void tiePoints(Player* Human, Player* Computer, Tournament& gameTournament);
     void addTotalPoints(Player& winner, Player& loser, Tournament& gameTournament);
@@ -84,20 +87,13 @@ public:
     string showLoadMenu();
     int menu();
 
-    /*void play(Player* p[2])
-    {
-        players = p;
+    void setupNewGame();
 
-        // now both classes refer to same players
-    } */
+    void showBoard(Tournament gameTournament);
 
-    Round(Player* p[2])
-    {
-        players[0] = p[0];
-        players[1] = p[1];
-    }
 
 private:
+
 
     //this is a pointer to an already existed array of pointers
     //this is used so there are no copies of the players
@@ -111,7 +107,6 @@ private:
     bool roundOverFlag;
     std::string engine;
     std::string requiredEngine;
-    string engine;
 
     //class Variables
     Layout layout;
@@ -125,13 +120,6 @@ private:
     std::vector<std::string> requiredEngines;
 
     //-------------------------------------------
-
-    Layout layout;
-    Stock stock;
-
-    int currentPlayer;
-    int nextPlayer;
-
     bool roundEnded;
 
 

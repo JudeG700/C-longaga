@@ -6,13 +6,21 @@
 * ***********************************************************
 */
 
-#include "human.h"
-#include <limits>
-#include <string>
 #include <iostream>
+#include <vector>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <stdio.h>
+#include <Windows.h>
+#include <iterator>
+#include <limits>
+#include <algorithm>
+
 #include "Computer.h"
 #include "round.h"
-#include <iterator>
+#include "human.h"
+
 
 using namespace std;
 
@@ -281,10 +289,7 @@ Algorithm:
    6) Return the finalized move details.
 Reference: Input validation structure assisted by Gemini AI.
 ********************************************************************* */
-Player::Move Human::takeTurn(Stock& gameStock,
-    Round gameRound,
-    int leftEnd,
-    int rightEnd)
+Player::Move Human::takeTurn(Stock& gameStock, Round gameRound, int leftEnd, int rightEnd)
 {
     Player::Move move;
 
@@ -301,7 +306,10 @@ Player::Move Human::takeTurn(Stock& gameStock,
         findPlayableTiles(hand, gameRound, leftEnd, rightEnd);
 
     if (!playableList.empty())
+    {
         move.hasPlayableTiles = true;
+
+    }
 
     bool choiceValid = false;
 
@@ -321,8 +329,7 @@ Player::Move Human::takeTurn(Stock& gameStock,
         if (choice == ONE)
         {
             //extract leftover input characters that won't interfear with the next input
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
+            //cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');            
             move.chosenTile = getValidatedTileFromHand();
 
             pair<int, int> pips = parseTile(move.chosenTile);

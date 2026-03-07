@@ -5,13 +5,17 @@
 #include "player.h"
 #include "round.h"
 
+
+//class Round;
+
 /* *********************************************************************
 Class Name: Tournament
 Purpose: Oversees the high-level scoring and victory conditions for the
          game session. Maintains cumulative scores across rounds and
          defines the target threshold for the final champion.
 ********************************************************************* */
-class Tournament {
+class Tournament 
+{
 
 public:
 
@@ -27,7 +31,8 @@ public:
                 1) Use member initialization to set scores to 0.
                 2) Set target score to the default winning threshold.
     ********************************************************************* */
-    Tournament() : humanScore(0), computerScore(0), targetScore(0) {};
+
+    Tournament(Player* p[]);
 
     // --- 3. Destructor ---
     virtual ~Tournament() {}
@@ -85,6 +90,8 @@ public:
     ********************************************************************* */
     void setHumanScore(int newScore);
 
+    void addScore(int points, Player* player);
+
     /* *********************************************************************
     Function Name: setComputerScore
     Purpose: Explicitly sets the computer's tournament score (for loading).
@@ -102,22 +109,15 @@ public:
                 1) Compare scores to targetScore.
                 2) Return winner's ID or empty if no winner yet.
     ********************************************************************* */
-    std::string determineWinner();
 
+    void calculatePoints(Player& winner, Player& loser);
 
-    Tournament(Player* p[2])
-    {
-        players[0] = p[0];
-        players[1] = p[1];
-    }
-
-    void initSave(Hand humanHand, Hand computerHand);
-    bool loadGameState(string filename, Player* Human, Player* Computer, Stock& gameStock, Tournament& gameTournament, Layout& layout);
-    void saveGameState(string filename, Player* Human, Player* Computer, Stock& gameStock, Tournament& gameTournament, Layout& layout);
+    void initSave(Player* Human, Player* Computer, Stock& gameStock, Tournament& tournament, Layout& layout, Round& currentRound);
+    bool loadGameState(string filename, Player* Human, Player* Computer, Stock& gameStock, Tournament& gameTournament, Layout& layout, Round& currentRound);
+    void saveGameState(string filename, Player* Human, Player* Computer, Stock& gameStock, Tournament& gameTournament, Layout& layout, Round& currentRound);
  
 
-    void startNew();
-    void load();
+    //void startNew();
 
     void play();
 
@@ -127,11 +127,6 @@ public:
 
     string determineWinner();
 
-    Tournament(Player* p[2])
-    {
-        players[0] = p[0];
-        players[1] = p[1];
-    }
 
 protected:
     // (None)
@@ -139,8 +134,6 @@ protected:
 private:
 
     Player* players[2];
-    Round gameRound;
-
 
     // Cumulative scores
     int humanScore;
