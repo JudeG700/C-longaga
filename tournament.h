@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include "player.h"
+#include "round.h"
 
 /* *********************************************************************
 Class Name: Tournament
@@ -103,10 +104,43 @@ public:
     ********************************************************************* */
     std::string determineWinner();
 
+
+    Tournament(Player* p[2])
+    {
+        players[0] = p[0];
+        players[1] = p[1];
+    }
+
+    void initSave(Hand humanHand, Hand computerHand);
+    bool loadGameState(string filename, Player* Human, Player* Computer, Stock& gameStock, Tournament& gameTournament, Layout& layout);
+    void saveGameState(string filename, Player* Human, Player* Computer, Stock& gameStock, Tournament& gameTournament, Layout& layout);
+ 
+
+    void startNew();
+    void load();
+
+    void play();
+
+    void playRound();
+
+    void addPoints(Player& winner, Player& loser);
+
+    string determineWinner();
+
+    Tournament(Player* p[2])
+    {
+        players[0] = p[0];
+        players[1] = p[1];
+    }
+
 protected:
     // (None)
 
 private:
+
+    Player* players[2];
+    Round gameRound;
+
 
     // Cumulative scores
     int humanScore;

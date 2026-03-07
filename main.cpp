@@ -1156,6 +1156,7 @@ int main()
 			if (players[0]->getHandTiles().empty() || players[1]->getHandTiles().empty())
 			{
 				//break statement for certain test cases
+				roundOver = true;
 				gameRound.roundOver();
 				break;
 			}
@@ -1252,7 +1253,7 @@ int main()
 			vector<string>boneyard = gameStock.getBoneyard();
 
 			const short MAX_CONSEC_PASSES = 2;
-			//if a player chose to pass
+			//if a player chose to pass 
 			if (move.passed)
 			{
 				//they are now set to passed
